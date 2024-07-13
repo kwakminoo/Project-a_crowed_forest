@@ -63,4 +63,3 @@ public class YarnManager : MonoBehaviour
 }
 
 Assets\Script\YarnManager.cs(61,24): error CS1061: 'DialogueRunner' does not contain a definition for 'SelectChoiceOption' and no accessible extension method 'SelectChoiceOption' accepting a first argument of type 'DialogueRunner' could be found (are you missing a using directive or an assembly reference?)
-가 뭐야?
