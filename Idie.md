@@ -1,3 +1,18 @@
+유니티 한글 폰트 깨질 때 설정
+----------------
+![image](https://github.com/user-attachments/assets/7b8de12c-18a7-4a16-aebd-f9184af89e8f)<br>
+* Source Font File: 변환할 폰트 파일<br>
+* Sampling Point Size: 폰트의 기본 크기 설정. 이 크기는 Atlas에 렌더링 되는 글자의 실제 픽셀 크기에 영향을 미치므로, 적절한 스케일링을 통해 메모리 사용량을 보존<br>
+* Padding: 각 글자 주변에 추가되는 여백을 결정. 이 여백은 서로 다른 글자들 사이의 공간을 둘 때 유용하며, 텍스트의 가독성을 향상함<br>
+* Atlas Resolution: 생성되는 폰트 아틀라스의 해상도를 결정. 해상도가 높을수록 텍스트의 품질이 높아지지만, 메모리 사용량이 증가함<br>
+* Character Set: ASCII, Unicode 등 생성할 글자 집합을 결정. 참고로 ASCII 코드는 기본적으로 한글을 지원하지 않지만, 해당 창에서 ASCII를 선택하더라도 실제로 유니코드 문자를 지원하기 때문에 한글을 사용할 수 있음<br>
+* Render Mode: 텍스트가 SDF, Raster 등 렌더링 되는 방식을 결정<br>
+* Get Kerning Pairs: 폰트의 글자 쌍 사이의 간격을 조정시키는 정보를 가져올 것인지 결정
+
+
+![image](https://github.com/user-attachments/assets/cff62371-3886-4cf8-bcc5-a0842afd53ac)
+
+
 Visual Studio나 IDE에서 클래스 정의로 이동하기
 클래스 정의 이동
 ----------
