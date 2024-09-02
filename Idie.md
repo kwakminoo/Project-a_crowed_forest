@@ -125,10 +125,55 @@ Yarn Spinner 스크립트나 설정에서 LineView의 크기 조정을 제한하
 Yarn Spinner 설정 파일이나 스크립트를 확인하여 크기 조정과 관련된 제한이 있는지 확인합니다.
 필요에 따라 Yarn Spinner 스크립트를 수정하거나 설정을 조정합니다.
 
-스토리 설정
----------------------------------------------------------------------------------------------
+게임화면에서 해상도가 깨질 때
+----------
+1. Canvas Scaler 설정 확인
+Canvas Scaler는 UI 요소가 화면 크기와 해상도에 맞게 스케일링되도록 조정합니다. 잘못된 Canvas Scaler 설정은 텍스트의 해상도 문제를 일으킬 수 있습니다.
 
-다른 별들의 힘을 빼앗기 위해 황색 옷의 왕은 다른 별의 우주로 침투할 수 있는 제단 판테온을 건설했다
+Canvas Scaler 확인:
 
-1. 레이븐은 황색 옷의 왕에게 이름과 힘을 빼앗긴 별과 함께 다니며 그 별의 힘으로 황색 옷의 왕을 쫒고 있다
-2. 
+Hierarchy 창에서 텍스트가 포함된 Canvas 오브젝트를 선택합니다.
+Inspector 창에서 Canvas Scaler 컴포넌트를 확인합니다.
+UI Scale Mode 설정:
+
+UI Scale Mode를 Scale With Screen Size로 설정합니다.
+Reference Resolution 필드에 기준 해상도를 입력합니다. 일반적으로 1920x1080 또는 게임의 목표 해상도를 설정합니다.
+Match 속성을 조정하여 Width와 Height의 비율을 적절히 설정합니다. 일반적으로 0.5로 설정하면 균형 잡힌 스케일링을 제공합니다.
+Dynamic Pixels Per Unit:
+
+Dynamic Pixels Per Unit 값을 높이면 텍스트의 해상도가 개선될 수 있습니다. 기본값(100)을 유지하거나 상황에 따라 높여 보세요.
+2. Text 컴포넌트 설정 조정
+텍스트 컴포넌트의 설정이 잘못되면 해상도가 낮아 보일 수 있습니다. 아래 설정을 확인하세요.
+
+Font Size 조정:
+
+텍스트 컴포넌트의 Font Size를 충분히 크게 설정하여 텍스트가 더 선명하게 표시되도록 합니다.
+Font Rendering Mode:
+
+Font 컴포넌트를 사용하는 경우, Rendering Mode를 Smooth 또는 Hinted Smooth로 설정합니다. 이는 텍스트 렌더링 품질을 향상시킬 수 있습니다.
+TextMeshPro 사용 (권장):
+
+TextMeshPro는 Unity의 기본 텍스트 컴포넌트보다 더 높은 품질의 텍스트 렌더링을 제공합니다.
+TextMeshPro를 사용하여 텍스트를 표시하면 해상도 문제가 크게 개선될 수 있습니다.
+3. TextMeshPro 설정 확인 (TextMeshPro 사용 시)
+TextMeshPro를 사용하는 경우, 다음 설정을 확인하여 텍스트 해상도를 개선할 수 있습니다.
+
+TextMeshPro - Text 설정:
+
+Font Size를 적절히 설정합니다.
+Auto Size 옵션을 비활성화하고 Font Size를 수동으로 설정해 보세요.
+Extra Padding 옵션을 활성화하여 텍스트 렌더링 시 계단 현상을 줄일 수 있습니다.
+TextMeshPro Font Asset 설정:
+
+사용 중인 TextMeshPro 폰트 에셋의 Rendering Mode를 Distance Field 16 또는 Distance Field 32로 설정합니다.
+이 설정은 고해상도 텍스트를 렌더링하는 데 유리합니다.
+4. 게임 뷰 해상도 확인
+Unity의 Game 뷰에서 해상도를 확인하여 문제가 발생하지 않도록 합니다.
+
+Game 뷰 해상도 설정:
+
+Game 뷰 상단의 해상도 드롭다운 메뉴를 클릭하여 현재 해상도를 확인합니다.
+게임의 목표 해상도를 선택하여 정확한 해상도로 게임을 테스트합니다.
+Maximize on Play 설정:
+
+Game 뷰의 Maximize on Play 옵션을 활성화하여 전체 화면으로 게임을 테스트할 때 발생할 수 있는 문제를 방지합니다
