@@ -177,3 +177,49 @@ Game 뷰 상단의 해상도 드롭다운 메뉴를 클릭하여 현재 해상�
 Maximize on Play 설정:
 
 Game 뷰의 Maximize on Play 옵션을 활성화하여 전체 화면으로 게임을 테스트할 때 발생할 수 있는 문제를 방지합니다
+
+YarnCommand를 사용한 명령어 정의
+------------
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Yarn.Unity;
+
+public class YarnCommandHandler : MonoBehaviour
+{
+    // "jumpToScene"라는 이름의 Yarn 명령어를 정의합니다.
+    [YarnCommand("jumpToScene")]
+    public void JumpToScene(string sceneName)
+    {
+        // Unity의 SceneManager를 사용해 씬을 전환합니다.
+        SceneManager.LoadScene(sceneName);
+    }
+}
+
+AddCommandHandler를 사용한 명령어 정의:
+-------------------------
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Yarn.Unity;
+
+public class YarnCommandHandler : MonoBehaviour
+{
+    public DialogueRunner dialogueRunner;
+
+    void Start()
+    {
+        // "jumpToScene" 명령어를 등록하고, 이를 호출할 때 JumpToScene 메서드가 실행되도록 합니다.
+        dialogueRunner.AddCommandHandler<string>("jumpToScene", JumpToScene);
+    }
+
+    void JumpToScene(string sceneName)
+    {
+        // Unity의 SceneManager를 사용해 씬을 전환합니다.
+        SceneManager.LoadScene(sceneName);
+    }
+}
+
+
+
+
+
+
