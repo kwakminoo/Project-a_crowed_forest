@@ -218,7 +218,11 @@ public class YarnCommandHandler : MonoBehaviour
     }
 }
 
-
+2D 배경 레이어 순서 변경
+---------
+* Z-축 위치 조정: 오브젝트의 Z-축 위치를 조정하여 화면에서의 깊이(앞/뒤)를 설정합니다.<br>
+* Sorting Layer 및 Order in Layer: 2D 게임에서 Sorting Layer와 Order in Layer를 사용하여 오브젝트가 화면에서 그려지는 순서를 결정합니다.<br>
+* Canvas의 Sorting Order: UI 캔버스와 관련된 배경은 Canvas 컴포넌트의 Sorting Layer와 Order in Layer를 사용하여 순서를 조정합니다.
 
 
 
