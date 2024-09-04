@@ -52,7 +52,7 @@ title:광신도와의 대결
 ---
 
 조사를 마친 뒤, 나는 갑작스럽게 광신도와 마주쳤다. 그의 광기 어린 눈빛은 나를 향해 번뜩였다. 나는 즉시 검을 뽑아들고 전투 태세를 갖추었다.
-<<command jumpToScene BattleScene>>
+<<jumpToScene BattleScene>>
 
 ===
 
