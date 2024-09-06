@@ -66,7 +66,11 @@ public calss TrunBasedSystem : MonoBehaviour
   public Character player;
   public CHaracter enemy;
   public BattleState state;
-
+  public Animator animator;
+  public GameObject deathMessagePanel;  // 죽음 메시지 UI 패널
+  public Text deathMessageText;  // 죽음 메시지 텍스트
+  public float delayBeforeMainMenu = 3f;  // 메인 화면으로 이동하기 전 대기 시간
+  private bool isDead = false; //사망여부
   void Start()
   {
     state = BattleState.START;
@@ -92,6 +96,7 @@ public calss TrunBasedSystem : MonoBehaviour
     player.Attack(enemy);
     if(enemy.health <= 0)
     {
+      Die();//적 사망 
       state = BattleState.WON;
       EndBattle();
     }
@@ -109,6 +114,7 @@ public calss TrunBasedSystem : MonoBehaviour
 
     if(player.health <= 0)
     {
+      Die();//플레이어 사망
       state = BattleState.LOST;
       EndBattle();
     }
@@ -119,17 +125,41 @@ public calss TrunBasedSystem : MonoBehaviour
     }
   }
 
+void Die()
+    {
+        isDead = true;
+
+        // 죽음 애니메이션 실행
+        animator.SetBool("isDead", true);
+    }
+
   void EndBattle()
   {
     if(state == BattleState.WON)
     {
       Debug.Log("WON");
+      StartCoroutine(HandleDeath());
     }
     else if(state == BattleState.LOST)
     {
       Debug.Log("You DIE");
+      StartCoroutine(HandleDeath());
     }
   }
+
+ IEnumerator HandleDeath()
+    {
+        // 애니메이션이 끝날 때까지 대기
+        yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
+
+        // 죽음 문구 패널 활성화
+        deathMessagePanel.SetActive(true);
+        deathMessageText.text = "You have died! Returning to the main menu...";
+
+        // 몇 초 동안 대기 후 메인 메뉴로 이동
+        yield return new WaitForSeconds(delayBeforeMainMenu);
+        SceneManager.LoadScene("MainMenu");  // MainMenu라는 씬으로 이동
+    }
 }
 ~~~
 
