@@ -224,6 +224,12 @@ public class YarnCommandHandler : MonoBehaviour
 * Sorting Layer 및 Order in Layer: 2D 게임에서 Sorting Layer와 Order in Layer를 사용하여 오브젝트가 화면에서 그려지는 순서를 결정합니다.<br>
 * Canvas의 Sorting Order: UI 캔버스와 관련된 배경은 Canvas 컴포넌트의 Sorting Layer와 Order in Layer를 사용하여 순서를 조정합니다.
 
+완성한 프로젝트를 빌드
+------------
+1. build setting에 들어간다
+2. 씬을 모두 추가하고 플로폼을 설정한다
+3. 하단에 build를 클립하면 끝
+
 
 
 
