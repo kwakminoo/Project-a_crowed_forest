@@ -230,6 +230,56 @@ public class YarnCommandHandler : MonoBehaviour
 2. 씬을 모두 추가하고 플로폼을 설정한다
 3. 하단에 build를 클립하면 끝
 
+얀 스피너에서 이미지 출력하기
+-
+1. 사용자 지정 명령을 사용하여 이미지 표시
+대화 중에 이미지를 보여주는 사용자 지정 Yarn Spinner 명령을 만들 수 있습니다. 이는 시스템 Image의 Unity 구성 요소를 사용하여 달성할 수 있습니다 UI.
+
+* 단계별 구현
+1. 이미지 UI 요소 만들기 : Unity 편집기에서 새 편집기를 만들고 Canvas(아직 없는 경우) Image여기에 구성 요소를 추가합니다. 이는 이미지의 표시 영역 역할을 합니다.
+다음과 같은 이름을 지정할 수 있습니다 DialogueImage.
+
+2. 이미지를 표시하기 위한 사용자 정의 원사 명령 생성 : Yarn 명령 처리기 스크립트에서 Yarn 스크립트의 명령에 따라 이미지를 표시하거나 숨기는 메서드를 만듭니다.
+~~~C#
+using UnityEngine;
+using UnityEngine.UI;
+using Yarn.Unity;
+
+public class DialogueImageHandler : MonoBehaviour
+{
+    public Image dialogueImage; // Drag your image component in the Unity Editor.
+
+    // Custom Yarn command to show an image.
+    [YarnCommand("show_image")]
+    public void ShowImage(string imageName)
+    {
+        // Load the image from Resources folder or another location
+        Sprite newSprite = Resources.Load<Sprite>("Images/" + imageName);
+        if (newSprite != null)
+        {
+            dialogueImage.sprite = newSprite;
+            dialogueImage.enabled = true;
+        }
+    }
+
+    // Custom Yarn command to hide the image.
+    [YarnCommand("hide_image")]
+    public void HideImage()
+    {
+        dialogueImage.enabled = false;
+    }
+}
 
 
+Yanr Spinner
+<<show_image "imageName">> // 이미지 출력
+<<hide_image>> // 이미지 숨기기
+~~~
+
+2. Dialogue Views 사용(대안)
+텍스트와 이미지를 보다 통합된 방식으로 동시에 표시하려면 Yarn Spinner LineView나 다른 Dialogue View구성 요소를 수정하거나 확장할 수 있습니다.
+
+* LineView 수정 : LineView텍스트와 이미지가 함께 표시되도록 이미지 필드를 포함하도록 확장합니다 .
+
+* 대화에 대한 사용자 정의 UI를 만드세요 : Text같은 패널에 구성 요소와 구성 요소를 추가한 Image다음, 새 대화 텍스트가 표시될 때 두 구성 요소를 동시에 업데이트하도록 스크립트를 수정합니다.
 
