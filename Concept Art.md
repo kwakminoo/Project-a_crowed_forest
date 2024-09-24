@@ -5,3 +5,5 @@
 ![DALL·E 2024-09-15 18 18 07 - A vertical pixel art background for a text adventure game, depicting a dark forest path illuminated by a red moon  The scene features dense, shadowy t](https://github.com/user-attachments/assets/91bd10e5-6f89-4522-a17d-1bd3b3414b2d)
 
 ![DALL·E 2024-09-15 18 19 32 - A vertical pixel art background for a text adventure game, showing a side view of a dark forest path illuminated by a red moon  The scene features sha](https://github.com/user-attachments/assets/572970d1-fed6-4dde-bf53-7cca0caad4c8)
+
+![DALL·E 2024-09-24 22 14 27 - A pixel art background of a dark forest at midnight, with a faint red glow casting an eerie atmosphere  The dense forest features tall, twisted trees ](https://github.com/user-attachments/assets/7383d70d-293d-4ea3-8ca3-6613ae9a9f19)
