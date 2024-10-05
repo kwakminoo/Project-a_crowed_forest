@@ -11,3 +11,5 @@
 ![6624b15b-6630-4308-a1df-21a69a001058](https://github.com/user-attachments/assets/76615dc4-10fe-4aea-a636-425978f43644)
 
 ![49bf2017-9980-4d98-a140-edaf52eafdc5](https://github.com/user-attachments/assets/59632793-82ba-41a6-9bbd-e96563b7a868)
+
+![황색 성역](https://github.com/user-attachments/assets/785272c4-d896-4716-8558-0998253e24de)
