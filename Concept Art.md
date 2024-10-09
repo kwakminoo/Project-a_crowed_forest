@@ -16,4 +16,3 @@
 
 ![황색 성역 1층 홀](https://github.com/user-attachments/assets/421eebcd-3353-40e8-8e3f-059602742ca0)
 
-![file](https://github.com/user-attachments/assets/d090b446-5c4e-40c1-ae9d-1dc051b3a31b)
