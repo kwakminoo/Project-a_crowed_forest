@@ -194,18 +194,8 @@ public class YarnCommandHandler : MonoBehaviour
         // Unity의 SceneManager를 사용해 씬을 전환합니다.
         SceneManager.LoadScene(sceneName);
     }
-}
-~~~
 
-AddCommandHandler를 사용한 명령어 정의:
--------------------------
-~~~C#
-using UnityEngine;
-using UnityEngine.SceneManagement;
-using Yarn.Unity;
-
-public class YarnCommandHandler : MonoBehaviour
-{
+    //AddCommandHandler를 사용한 명령어 정의:
     public DialogueRunner dialogueRunner;
 
     void Start()
