@@ -180,6 +180,7 @@ Game 뷰의 Maximize on Play 옵션을 활성화하여 전체 화면으로 게�
 
 YarnCommand를 사용한 명령어 정의
 ------------
+~~~C#
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Yarn.Unity;
@@ -194,9 +195,11 @@ public class YarnCommandHandler : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 }
+~~~
 
 AddCommandHandler를 사용한 명령어 정의:
 -------------------------
+~~~C#
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Yarn.Unity;
@@ -217,6 +220,7 @@ public class YarnCommandHandler : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 }
+~~~
 
 2D 배경 레이어 순서 변경
 ---------
