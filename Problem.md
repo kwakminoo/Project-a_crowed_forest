@@ -289,26 +289,30 @@ using Yarn.Unity;
 
 public class DialogueImageHandler : MonoBehaviour
 {
-    public Image dialogueImage; // Drag your image component in the Unity Editor.
+    public Image dialogueImage; // Assign your UI Image component in the Inspector
 
-    // Custom Yarn command to show an image.
+    // Custom Yarn command to show an image
     [YarnCommand("show_image")]
     public void ShowImage(string imageName)
     {
         // Load the image from Resources folder or another location
-        Sprite newSprite = Resources.Load<Sprite>("Images/" + imageName);
+        Sprite newSprite = Resources.Load<Sprite>("Images/" + imageName); // Ensure the image is in the Resources/Images folder
         if (newSprite != null)
         {
             dialogueImage.sprite = newSprite;
-            dialogueImage.enabled = true;
+            dialogueImage.enabled = true; // Show the image
+        }
+        else
+        {
+            Debug.LogError("Image not found: " + imageName);
         }
     }
 
-    // Custom Yarn command to hide the image.
+    // Custom Yarn command to hide the image
     [YarnCommand("hide_image")]
     public void HideImage()
     {
-        dialogueImage.enabled = false;
+        dialogueImage.enabled = false; // Hide the image
     }
 }
 
@@ -325,3 +329,7 @@ Yanr Spinner
 
 * 대화에 대한 사용자 정의 UI를 만드세요 : Text같은 패널에 구성 요소와 구성 요소를 추가한 Image다음, 새 대화 텍스트가 표시될 때 두 구성 요소를 동시에 업데이트하도록 스크립트를 수정합니다.
 
+
+SaveMode
+-
+유니티 스크립트 내에 문제가 생겼을 때 최소한의 필요한 것들만 불러온 다음 스크립트를 수정하면 SaveMode에서 벗어난다
