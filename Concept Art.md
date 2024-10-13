@@ -16,3 +16,4 @@
 
 ![황색 성역 1층 홀](https://github.com/user-attachments/assets/421eebcd-3353-40e8-8e3f-059602742ca0)
 
+![Uploading DALL·E 2024-10-13 23.03.13 - A pixel art character in a black coat and boots, standing in a neutral pose with a sword at their side. The character is facing sideways, with their b.jpg…]()
