@@ -49,48 +49,41 @@ public class YarnTextAndImageManager : MonoBehaviour
 
 
 ~~~C#
-public Image dialogueImage; // Assign your UI Image component in the Inspector
-    private Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
+public TextMeshProUGUI dialogueText;  // Yarn 텍스트를 출력할 UI
+    public Image characterImage;          // 캐릭터나 배경 이미지를 출력할 UI
+
+    private DialogueRunner dialogueRunner;
 
     void Start()
     {
-        dialogueImage.enabled = false; // Start with the image hidden
+        dialogueRunner = FindObjectOfType<DialogueRunner>();
+
+        // Yarn 커스텀 명령 추가
+        dialogueRunner.AddCommandHandler("show_image", ShowImage);
+        dialogueRunner.AddCommandHandler("hide_image", HideImage);
+
+        // 이미지 초기 비활성화
+        characterImage.enabled = false;
     }
 
-    // Custom Yarn command to show an image
-    [YarnCommand("show_image")]
+    // Yarn 명령: show_image
     public void ShowImage(string imageName)
     {
-        Sprite newSprite;
-
-        // Check if sprite is already cached
-        if (spriteCache.ContainsKey(imageName))
+        Sprite newSprite = Resources.Load<Sprite>("Images/" + imageName);
+        if (newSprite != null)
         {
-            newSprite = spriteCache[imageName];
+            characterImage.sprite = newSprite;
+            characterImage.enabled = true;
         }
         else
         {
-            // Load the sprite from Resources if not cached
-            newSprite = Resources.Load<Sprite>("Images/" + imageName);
-            if (newSprite != null)
-            {
-                spriteCache.Add(imageName, newSprite); // Cache the loaded sprite
-            }
-            else
-            {
-                Debug.LogError("Image not found: " + imageName);
-                return;
-            }
+            Debug.LogError("Image not found: " + imageName);
         }
-
-        dialogueImage.sprite = newSprite;
-        dialogueImage.enabled = true; // Show the image
     }
 
-    // Custom Yarn command to hide the image
-    [YarnCommand("hide_image")]
+    // Yarn 명령: hide_image
     public void HideImage()
     {
-        dialogueImage.enabled = false; // Hide the image
+        characterImage.enabled = false;
     }
 ~~~
