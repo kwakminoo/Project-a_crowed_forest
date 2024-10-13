@@ -289,30 +289,49 @@ using Yarn.Unity;
 
 public class DialogueImageHandler : MonoBehaviour
 {
-    public Image dialogueImage; // Assign your UI Image component in the Inspector
+    // Canvas 안에 있는 Image UI 객체에 대한 참조
+    public Image imageDisplayObject;
 
-    // Custom Yarn command to show an image
-    [YarnCommand("show_image")]
-    public void ShowImage(string imageName)
+    // Start 함수에서 명령어 처리기를 DialogueRunner에 등록
+    void Start()
     {
-        // Load the image from Resources folder or another location
-        Sprite newSprite = Resources.Load<Sprite>("Images/" + imageName); // Ensure the image is in the Resources/Images folder
-        if (newSprite != null)
+        // DialogueRunner를 찾고 명령어 처리기를 등록
+        DialogueRunner dialogueRunner = FindObjectOfType<DialogueRunner>();
+        if (dialogueRunner != null)
         {
-            dialogueImage.sprite = newSprite;
-            dialogueImage.enabled = true; // Show the image
+            dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
+            dialogueRunner.AddCommandHandler("hide_image", HideImage);
         }
         else
         {
-            Debug.LogError("Image not found: " + imageName);
+            Debug.LogError("DialogueRunner를 찾을 수 없습니다.");
         }
     }
 
-    // Custom Yarn command to hide the image
-    [YarnCommand("hide_image")]
+    // show_image 명령어를 처리하는 함수
+    public void ShowImage(string imageName)
+    {
+        // Resources/Images/ 경로에서 이미지 로드
+        Sprite imageSprite = Resources.Load<Sprite>("Images/" + imageName);
+
+        if (imageSprite != null)
+        {
+            // 로드한 이미지를 Image 컴포넌트에 설정
+            imageDisplayObject.sprite = imageSprite;
+            // 이미지가 보이도록 투명도 조정
+            imageDisplayObject.color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            Debug.LogError("이미지를 찾을 수 없습니다: " + imageName);
+        }
+    }
+
+    // hide_image 명령어를 처리하는 함수
     public void HideImage()
     {
-        dialogueImage.enabled = false; // Hide the image
+        // 이미지 투명도를 0으로 설정하여 숨김
+        imageDisplayObject.color = new Color(1, 1, 1, 0);
     }
 }
 
