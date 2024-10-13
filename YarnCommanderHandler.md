@@ -46,3 +46,51 @@ public class YarnTextAndImageManager : MonoBehaviour
 }
 
 ~~~
+
+
+~~~C#
+public Image dialogueImage; // Assign your UI Image component in the Inspector
+    private Dictionary<string, Sprite> spriteCache = new Dictionary<string, Sprite>();
+
+    void Start()
+    {
+        dialogueImage.enabled = false; // Start with the image hidden
+    }
+
+    // Custom Yarn command to show an image
+    [YarnCommand("show_image")]
+    public void ShowImage(string imageName)
+    {
+        Sprite newSprite;
+
+        // Check if sprite is already cached
+        if (spriteCache.ContainsKey(imageName))
+        {
+            newSprite = spriteCache[imageName];
+        }
+        else
+        {
+            // Load the sprite from Resources if not cached
+            newSprite = Resources.Load<Sprite>("Images/" + imageName);
+            if (newSprite != null)
+            {
+                spriteCache.Add(imageName, newSprite); // Cache the loaded sprite
+            }
+            else
+            {
+                Debug.LogError("Image not found: " + imageName);
+                return;
+            }
+        }
+
+        dialogueImage.sprite = newSprite;
+        dialogueImage.enabled = true; // Show the image
+    }
+
+    // Custom Yarn command to hide the image
+    [YarnCommand("hide_image")]
+    public void HideImage()
+    {
+        dialogueImage.enabled = false; // Hide the image
+    }
+~~~
