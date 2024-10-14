@@ -1,49 +1,28 @@
 이미지
 -
 ~~~C#
- public TextMeshProUGUI dialogueText;  // Yarn 텍스트를 출력할 UI
-    public Image characterImage;          // 캐릭터나 배경 이미지를 출력할 UI
-
-    private DialogueRunner dialogueRunner;
+    public YarnProject yarnProject;
+    public GameObject imageObject; // 이미지가 표시될 UI 오브젝트
+    public GameObject textObject;  // 텍스트 박스 UI 오브젝트
 
     void Start()
     {
-        dialogueRunner = FindObjectOfType<DialogueRunner>();
-
-        // Yarn 커스텀 명령 추가 (string[] 매개변수를 받도록 수정)
-        dialogueRunner.AddCommandHandler("show_image", ShowImage);
-        dialogueRunner.AddCommandHandler("hide_image", HideImage);
-
-        // 이미지 초기 비활성화
-        characterImage.enabled = false;
+        // Yarn Spinner 명령어에 커스텀 명령을 추가
+        var dialogueRunner = FindObjectOfType<DialogueRunner>();
+        dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
     }
 
-    // Yarn 명령: show_image
-    public void ShowImage(string[] parameters)
+    // 이미지를 보여주는 함수
+    void ShowImage(string imageName)
     {
-        if (parameters.Length > 0)
+        // 이미지 불러오기 및 표시 로직 구현
+        var image = Resources.Load<Sprite>(imageName);
+        if (image != null)
         {
-            string imageName = parameters[0];  // 첫 번째 매개변수를 이미지 이름으로 사용
-            Sprite newSprite = Resources.Load<Sprite>("Images/" + imageName);
-            if (newSprite != null)
-            {
-                characterImage.sprite = newSprite;
-                characterImage.enabled = true;
-            }
-            else
-            {
-                Debug.LogError("Image not found: " + imageName);
-            }
-        }
-        else
-        {
-            Debug.LogError("No image name provided for show_image command");
-        }
-    }
+            imageObject.GetComponent<UnityEngine.UI.Image>().sprite = image;
+            imageObject.SetActive(true); // 이미지 오브젝트 활성화
 
-    // Yarn 명령: hide_image
-    public void HideImage(string[] parameters)
-    {
-        characterImage.enabled = false;
+            textObject.transform.SetSiblingIndex(1); // 텍스트 박스를 이미지 아래로 이동
+        }
     }
 ~~~
