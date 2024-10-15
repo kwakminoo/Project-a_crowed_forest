@@ -133,46 +133,6 @@ SelectOption 또는 유사한 이름의 메서드를 검색합니다.
 ---------------------------------------------------------------------------------------------
 1. ScrollRect: 텍스트를 스크롤하는 데 사용할 수 있는 스크롤기능들을 제공
 
-
-라인뷰의 텍스트 창 크기 조절이 안될 때
----------------------------------------------------------------------------------------------
-1. RectTransform 조작 문제
-LineView가 UI의 일부인 경우, RectTransform을 사용하여 크기를 조정해야 합니다. 텍스트 출력 창의 부모 객체나 RectTransform 설정에 문제가 있을 수 있습니다.
-
-해결 방법:
-
-LineView 객체를 선택하고 RectTransform 컴포넌트를 확인합니다.
-RectTransform 컴포넌트의 크기 조정 핸들을 사용하여 창의 크기를 조정합니다.
-부모 객체의 RectTransform 설정이 자식 객체의 크기 조정에 영향을 미칠 수 있으므로 부모 객체의 설정도 확인합니다.
-2. Canvas 설정 문제
-UI 요소는 Canvas 객체의 설정에 따라 다르게 동작할 수 있습니다. Canvas의 Render Mode 설정에 따라 UI 요소의 크기 조정이 제한될 수 있습니다.
-
-해결 방법:
-
-Canvas 객체의 Render Mode가 Screen Space - Overlay, Screen Space - Camera, 또는 World Space 중 어떤 것으로 설정되어 있는지 확인합니다.
-Render Mode에 따라 UI 요소의 크기 조정 방법이 다를 수 있으므로 적절한 모드를 선택합니다.
-3. Layout Component 충돌
-LineView 객체나 부모 객체에 Layout 관련 컴포넌트(HorizontalLayoutGroup, VerticalLayoutGroup, ContentSizeFitter 등)가 추가되어 있는 경우, 크기 조정이 제한될 수 있습니다.
-
-해결 방법:
-
-LineView 객체와 부모 객체에 추가된 Layout 관련 컴포넌트를 확인합니다.
-필요에 따라 Layout 관련 컴포넌트를 일시적으로 비활성화하거나 제거하고 크기를 조정한 후 다시 활성화합니다.
-4. Anchors 설정 문제
-RectTransform의 Anchor 설정이 잘못되어 있는 경우, 크기 조정이 의도한 대로 작동하지 않을 수 있습니다.
-
-해결 방법:
-
-RectTransform의 Anchor 설정을 확인합니다. 일반적으로 Anchor는 부모 객체 내에서 UI 요소의 위치와 크기를 제어합니다.
-Anchor 설정을 적절히 조정하여 크기 조정이 가능하도록 합니다.
-5. Yarn Spinner 스크립트 제한
-Yarn Spinner 스크립트나 설정에서 LineView의 크기 조정을 제한하는 부분이 있을 수 있습니다.
-
-해결 방법:
-
-Yarn Spinner 설정 파일이나 스크립트를 확인하여 크기 조정과 관련된 제한이 있는지 확인합니다.
-필요에 따라 Yarn Spinner 스크립트를 수정하거나 설정을 조정합니다.
-
 게임화면에서 해상도가 깨질 때
 ----------
 1. Canvas Scaler 설정 확인
@@ -272,83 +232,81 @@ public class YarnCommandHandler : MonoBehaviour
 2. 씬을 모두 추가하고 플로폼을 설정한다
 3. 하단에 build를 클립하면 끝
 
-얀 스피너에서 이미지 출력하기
--
-1. 사용자 지정 명령을 사용하여 이미지 표시
-대화 중에 이미지를 보여주는 사용자 지정 Yarn Spinner 명령을 만들 수 있습니다. 이는 시스템 Image의 Unity 구성 요소를 사용하여 달성할 수 있습니다 UI.
-
-* 단계별 구현
-1. 이미지 UI 요소 만들기 : Unity 편집기에서 새 편집기를 만들고 Canvas(아직 없는 경우) Image여기에 구성 요소를 추가합니다. 이는 이미지의 표시 영역 역할을 합니다.
-다음과 같은 이름을 지정할 수 있습니다 DialogueImage.
-
-2. 이미지를 표시하기 위한 사용자 정의 원사 명령 생성 : Yarn 명령 처리기 스크립트에서 Yarn 스크립트의 명령에 따라 이미지를 표시하거나 숨기는 메서드를 만듭니다.
-~~~C#
-using UnityEngine;
-using UnityEngine.UI;
-using Yarn.Unity;
-
-public class DialogueImageHandler : MonoBehaviour
-{
-    // Canvas 안에 있는 Image UI 객체에 대한 참조
-    public Image imageDisplayObject;
-
-    // Start 함수에서 명령어 처리기를 DialogueRunner에 등록
-    void Start()
-    {
-        // DialogueRunner를 찾고 명령어 처리기를 등록
-        DialogueRunner dialogueRunner = FindObjectOfType<DialogueRunner>();
-        if (dialogueRunner != null)
-        {
-            dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-            dialogueRunner.AddCommandHandler("hide_image", HideImage);
-        }
-        else
-        {
-            Debug.LogError("DialogueRunner를 찾을 수 없습니다.");
-        }
-    }
-
-    // show_image 명령어를 처리하는 함수
-    public void ShowImage(string imageName)
-    {
-        // Resources/Images/ 경로에서 이미지 로드
-        Sprite imageSprite = Resources.Load<Sprite>("Images/" + imageName);
-
-        if (imageSprite != null)
-        {
-            // 로드한 이미지를 Image 컴포넌트에 설정
-            imageDisplayObject.sprite = imageSprite;
-            // 이미지가 보이도록 투명도 조정
-            imageDisplayObject.color = new Color(1, 1, 1, 1);
-        }
-        else
-        {
-            Debug.LogError("이미지를 찾을 수 없습니다: " + imageName);
-        }
-    }
-
-    // hide_image 명령어를 처리하는 함수
-    public void HideImage()
-    {
-        // 이미지 투명도를 0으로 설정하여 숨김
-        imageDisplayObject.color = new Color(1, 1, 1, 0);
-    }
-}
-
-
-Yanr Spinner
-<<show_image "imageName">> // 이미지 출력
-<<hide_image>> // 이미지 숨기기
-~~~
-
-2. Dialogue Views 사용(대안)
-텍스트와 이미지를 보다 통합된 방식으로 동시에 표시하려면 Yarn Spinner LineView나 다른 Dialogue View구성 요소를 수정하거나 확장할 수 있습니다.
-
-* LineView 수정 : LineView텍스트와 이미지가 함께 표시되도록 이미지 필드를 포함하도록 확장합니다 .
-
-* 대화에 대한 사용자 정의 UI를 만드세요 : Text같은 패널에 구성 요소와 구성 요소를 추가한 Image다음, 새 대화 텍스트가 표시될 때 두 구성 요소를 동시에 업데이트하도록 스크립트를 수정합니다.
-
-
 SaveMode
 -
 유니티 스크립트 내에 문제가 생겼을 때 최소한의 필요한 것들만 불러온 다음 스크립트를 수정하면 SaveMode에서 벗어난다
+
+Line View에 Scroll View 구조 대입
+-
+Hierarchy 창에서 **라인뷰(Line View)**가 있는 오브젝트에 Scroll View를 추가하거나 그 안에 포함시킵니다.
+
+라인뷰 내부의 구성 요소를 Scroll View로 재구성합니다.
+
+라인뷰에서의 예시 구조:
+라인뷰:
+라인뷰 오브젝트는 대화 텍스트와 이미지 등을 담을 고정된 크기의 박스입니다.
+텍스트나 이미지가 많아져도 라인뷰의 크기가 늘어나지 않도록 하고, 스크롤을 통해 내용을 표시합니다.
+scss
+코드 복사
+Line View (고정된 크기)
+    Scroll View (스크롤 가능하도록 추가)
+        Viewport (스크롤이 가능한 콘텐츠 영역)
+            Content (스크롤 가능한 콘텐츠, 여기에 이미지와 텍스트가 들어감)
+                Text (대화 텍스트)
+                Image (이미지 오브젝트)
+구현 단계:
+1. Scroll View 추가
+라인뷰에 Scroll View를 추가합니다. 이를 통해, 텍스트와 이미지가 라인뷰의 고정된 박스 크기를 넘을 때 스크롤이 가능해집니다.
+
+라인뷰(Line View) 오브젝트 선택 후, UI -> Scroll View를 추가합니다.
+2. Scroll View 설정
+Scroll View 자체는 라인뷰 안에서 고정된 크기의 박스 역할을 하게 됩니다. 이를 위해 Scroll View의 RectTransform을 설정하여 크기를 조정합니다.
+
+Scroll View의 RectTransform에서 너비와 높이를 고정된 값으로 설정하세요. 예를 들어:
+Width: 400
+Height: 300
+3. Content 설정
+Scroll View 안의 Content는 스크롤되는 영역입니다. 이 안에 텍스트와 이미지를 추가할 수 있습니다.
+
+Content 오브젝트에 Vertical Layout Group을 추가하여, 텍스트와 이미지가 수직으로 정렬되도록 합니다.
+
+Child Alignment: Upper Left (텍스트와 이미지가 위쪽에서 시작)
+Child Force Expand: Height를 true, Width를 false로 설정합니다.
+Content Size Fitter를 사용하여 Content의 높이가 내부 텍스트와 이미지에 맞춰 자동으로 늘어나도록 설정합니다.
+
+Vertical Fit을 Preferred Size로 설정.
+4. 텍스트 및 이미지 추가
+이제 Content 오브젝트 안에 대화 텍스트와 이미지를 추가할 수 있습니다.
+
+Text 추가: Content 오브젝트에 우클릭하여 UI -> Text를 추가하고, 대화 텍스트를 입력합니다.
+
+Image 추가: Content 오브젝트에 우클릭하여 UI -> Image를 추가하고, 표시할 이미지를 설정합니다.
+
+이렇게 하면 텍스트와 이미지가 박스 안에서 정렬되고, 내용이 많아지면 스크롤을 통해 아래로 볼 수 있습니다.
+
+5. 스크롤 확인
+텍스트와 이미지가 라인뷰의 고정된 크기를 초과할 경우, Scroll View가 활성화되어 내용을 스크롤할 수 있습니다. 필요에 따라 Vertical Scrollbar만 활성화하고, Horizontal Scrollbar는 비활성화하는 식으로 설정을 조정할 수 있습니다.
+
+6. 추가 설정 (옵션)
+Scroll Rect 설정: Scroll View에서 스크롤 속도나 민감도를 설정할 수 있습니다. Scroll Rect 컴포넌트에서 Scroll Sensitivity를 조정하여 스크롤할 때 반응 속도를 조절할 수 있습니다.
+Scrollbar: 필요에 따라 Vertical 또는 Horizontal Scrollbar를 비활성화하거나, 스크롤이 많지 않은 경우 자동으로 숨기도록 설정할 수 있습니다.
+최종 Unity 구성 예시:
+Scroll View 구조:
+
+Line View
+Scroll View
+Viewport
+Content
+Text (대화 텍스트)
+Image (이미지 오브젝트)
+Vertical Layout Group 설정:
+
+Child Alignment: Upper Left
+Child Force Expand: Height (True), Width (False)
+Padding: 적절하게 설정하여 텍스트와 이미지가 너무 가까워지지 않도록 여백을 추가합니다.
+Content Size Fitter 설정:
+
+Vertical Fit: Preferred Size
+RectTransform 설정:
+
+Scroll View의 RectTransform은 크기를 고정된 값으로 설정하여, 스크롤을 통해 텍스트와 이미지를 볼 수 있도록 합니다.
