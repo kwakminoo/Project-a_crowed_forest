@@ -6,117 +6,113 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using Yarn.Unity;
 using TMPro;
+using System;
 
 public class CustomLineView : DialogueViewBase
 {
     // UI 요소들: 텍스트, 이미지, 선택지 버튼 등이 배치될 부모 오브젝트
     public Transform contentParent;  // 스크롤 뷰 안에 들어갈 컨텐츠(텍스트, 이미지, 선택지)
     public GameObject textPrefab;    // 텍스트를 담을 프리팹
-    public GameObject imagePrefab;   // 이미지를 담을 프리팹
     public GameObject optionButtonPrefab;  // 선택지 버튼 프리팹
     public ScrollRect scrollRect;    // 스크롤 가능한 영역
+    private GameObject activeTextObject;  // 기존 텍스트 오브젝트를 저장할 변수
 
-void Start()
+
+
+    // 대사 출력
+    public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-        // Yarn Spinner 명령어에 커스텀 명령 추가
-        var dialogueRunner = FindObjectOfType<DialogueRunner>();
-
-        // 이미지를 보여주는 명령어 등록
-        dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-
-        // 이미지를 숨기는 명령어 등록
-        dialogueRunner.AddCommandHandler("hide_image", HideImage);
-    }
-
-    // 1. 대사 출력
-   public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
-{
-    if (textPrefab == null)
-    {
-        Debug.LogError("textPrefab이 설정되지 않았습니다!");
-        return;
-    }
-
-    if (contentParent == null)
-    {
-        Debug.LogError("contentParent가 설정되지 않았습니다!");
-        return;
-    }
-
-    // 텍스트 출력 오브젝트 생성
-    GameObject textObject = Instantiate(textPrefab, contentParent);
-
-    if (textObject == null)
-    {
-        Debug.LogError("textObject가 생성되지 않았습니다!");
-        return;
-    }
-
-    // 텍스트 컴포넌트가 있는지 확인
-    TextMeshProUGUI textComponent = textObject.GetComponent<TextMeshProUGUI>();
-    if (textComponent == null)
-    {
-        Debug.LogError("Text 컴포넌트를 찾을 수 없습니다!");
-        Debug.Log("textObject의 이름: " + textObject.name);  // 프리팹의 이름을 출력하여 정확한 구조 확인
-        return;
-    }
-
-    // 텍스트 설정
-    textComponent.text = line.TextWithoutCharacterName.Text;
-
-    // 대사 출력 완료 후 콜백 호출
-    onDialogueLineFinished();
-}
-
-    // 2. 이미지 출력
-    void ShowImage(string imageName)
-    {
-        // 이미지 불러오기 및 표시
-        var image = Resources.Load<Sprite>(imageName);
-        if (image != null)
+        if (textPrefab == null)
         {
-            imagePrefab.GetComponent<UnityEngine.UI.Image>().sprite = image;
-            imagePrefab.SetActive(true); // 이미지 오브젝트 활성화
-
+            Debug.LogError("textPrefab이 설정되지 않았습니다!");
+            return;
         }
+
+        if (contentParent == null)
+        {
+            Debug.LogError("contentParent가 설정되지 않았습니다!");
+            return;
+        }
+
+        // 기존 텍스트 오브젝트가 있는지 contentParent의 자식 오브젝트에서 확인
+        TextMeshProUGUI textComponent = contentParent.GetComponentInChildren<TextMeshProUGUI>();
+
+        // 텍스트 오브젝트가 없으면 새로 생성
+        if (textComponent == null)
+        {
+            GameObject textObject = Instantiate(textPrefab, contentParent);
+            textComponent = textObject.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (textComponent == null)
+        {
+            Debug.LogError("Text 컴포넌트를 찾을 수 없습니다!");
+            return;
+        }
+
+        // 텍스트 업데이트
+        textComponent.text = line.TextWithoutCharacterName.Text;
+
+        // 대사 출력 완료 후 콜백 호출
+        onDialogueLineFinished();
+
+        // 스크롤 위치 갱신
+        UpdateScrollPosition();
     }
 
-    // 이미지를 숨기는 함수
-    void HideImage()
+
+    // 스크롤 업데이트 함수
+    private void UpdateScrollPosition()
     {
-        // 이미지 오브젝트 비활성화
-        imagePrefab.SetActive(false);
+        Canvas.ForceUpdateCanvases();
+        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤이 아래로 이동
     }
 
     // 3. 선택지 출력
     public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
+{
+    Debug.Log($"RunOptions 호출됨. 선택지 개수: {options.Length}");
+
+    foreach (Transform child in contentParent)
     {
-        // 기존 선택지 초기화
-        foreach (Transform child in contentParent)
+        if (child.GetComponent<Button>())
         {
-            if (child.GetComponent<Button>())
-            {
-                Destroy(child.gameObject);
-            }
+            Destroy(child.gameObject);
         }
-
-        // 선택지 버튼 생성
-        for (int i = 0; i < options.Length; i++)
-        {
-            int optionIndex = i;  // 선택지 인덱스 저장
-            GameObject button = Instantiate(optionButtonPrefab, contentParent);
-            button.GetComponentInChildren<Text>().text = options[i].Line.TextWithoutCharacterName.Text;
-
-            // 선택지 클릭 이벤트 추가
-            button.GetComponent<Button>().onClick.AddListener(() => {
-                onOptionSelected(optionIndex);
-                ClearOptions();
-            });
-        }
-
-        // 스크롤을 맨 위로 초기화
-        scrollRect.verticalNormalizedPosition = 1f;
     }
+
+    for (int i = 0; i < options.Length; i++)
+    {
+        Debug.Log($"선택지 {i + 1}: {options[i].Line.TextWithoutCharacterName.Text}");
+
+        int optionIndex = i;
+        GameObject button = Instantiate(optionButtonPrefab, contentParent);
+
+        // 버튼이 비활성화된 경우 강제 활성화
+        button.SetActive(true);
+
+        TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
+        if (buttonText != null)
+        {
+            buttonText.text = options[i].Line.TextWithoutCharacterName.Text;
+            Debug.Log($"선택지 버튼 생성됨: {buttonText.text}");
+        }
+        else
+        {
+            Debug.LogError("Button에 TextMeshProUGUI 컴포넌트가 없습니다.");
+        }
+
+        button.GetComponent<Button>().onClick.AddListener(() => {
+            onOptionSelected(optionIndex);
+            ClearOptions();
+        });
+    }
+
+    scrollRect.verticalNormalizedPosition = 1f;
+}
+
+
+
 
     // 선택지 제거
     private void ClearOptions()
@@ -138,7 +134,6 @@ void Start()
         scrollRect.verticalNormalizedPosition = 0f;  // 스크롤이 아래로 자동으로 내려가도록 설정
     }
 }
-
 ~~~
 
 이미지 출력
