@@ -139,17 +139,9 @@ public class CustomLineView : DialogueViewBase
 이미지 출력
 -
 ~~~C#
-    public YarnProject yarnProject;
     public GameObject imageObject; // 이미지가 표시될 UI 오브젝트
-    public GameObject textObject;  // 텍스트 박스 UI 오브젝트
 
-    void Start()
-    {
-        // Yarn Spinner 명령어에 커스텀 명령을 추가
-        var dialogueRunner = FindObjectOfType<DialogueRunner>();
-        dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-    }
-
+    [YarnCommand("show_image")]
     // 이미지를 보여주는 함수
     void ShowImage(string imageName)
     {
