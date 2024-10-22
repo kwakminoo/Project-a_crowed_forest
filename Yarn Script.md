@@ -136,6 +136,150 @@ public class CustomLineView : DialogueViewBase
 }
 ~~~
 
+~~~C#
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections.Generic;
+using Yarn.Unity;
+using TMPro;
+using System;
+
+public class CustomLineView : DialogueViewBase
+{
+    // UI 요소들: 텍스트, 이미지, 선택지 버튼 등이 배치될 부모 오브젝트
+    public Transform contentParent;  // 스크롤 뷰 안에 들어갈 컨텐츠(텍스트, 이미지, 선택지)
+    public GameObject textPrefab;    // 텍스트를 담을 프리팹
+    public GameObject imagePrefab;   // 이미지를 담을 프리펩
+    public GameObject optionButtonPrefab;  // 선택지 버튼 프리팹
+    public ScrollRect scrollRect;    // 스크롤 가능한 영역
+    private GameObject activeTextObject;  // 기존 텍스트 오브젝트를 저장할 변수
+
+    private Queue<GameObject> buttonPool = new Queue<GameObject>();
+
+    // 대사 출력
+    public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
+    {
+        ClearContent();
+
+        if (textPrefab == null)
+        {
+            Debug.LogError("textPrefab이 설정되지 않았습니다!");
+            return;
+        }
+
+        if (contentParent == null)
+        {
+            Debug.LogError("contentParent가 설정되지 않았습니다!");
+            return;
+        }
+
+        GameObject textObject = InstantiateOrReuse(textPrefab, contentParent);
+        TextMeshProUGUI storyText = textObject.GetComponent<TextMeshProUGUI>();
+        storyText.text = line.TextWithoutCharacterName.Text;
+
+        onDialogueLineFinished();
+        ScrollBottom();
+    }
+
+    [YarnCommand("show_image")]
+    public void ShowImage(string imageName)
+    {
+        GameObject imageObject = Instantiate(imagePrefab, contentParent);
+        Image imageComponent = imageObject.GetComponent<Image>();
+        Sprite image = Resources.Load<Sprite>($"Images/{imageName}");
+        if(image != null)
+        {
+            imageComponent.sprite = image;
+        }
+        else
+        {
+            Debug.LogError($"이미지 '{imageName}을 찾을 수 없습니다 경로를 확인하세요");
+        }
+
+    }
+
+    [YarnCommand("hide_image")]
+    public void HideImage()
+    {
+        imagePrefab.SetActive(false);
+    }
+    // 3. 선택지 출력
+    public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
+    {
+        Debug.Log($"RunOptions 호출됨. 선택지 개수: {options.Length}");
+
+        ClearContent();
+
+        if(!contentParent.gameObject.activeInHierarchy)
+        {
+            contentParent.gameObject.SetActive(true);
+        }
+
+        for (int i = 0; i < options.Length; i++)
+        {
+            Debug.Log($"선택지 {i + 1}: {options[i].Line.TextWithoutCharacterName.Text}");
+
+            int optionIndex = i;
+
+            GameObject button = GetOrCreateButton();
+            button.transform.SetParent(contentParent, false);
+            button.SetActive(true);
+
+            TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
+            buttonText.text = options[i].Line.TextWithoutCharacterName.Text;
+
+            button.GetComponent<Button>().onClick.AddListener(() => {
+                onOptionSelected(optionIndex);
+                ClearContent();
+            });
+        }
+        ScrollBottom();
+    }
+
+    private GameObject GetOrCreateButton()
+    {
+        if(buttonPool.Count > 0)
+        {
+            return buttonPool.Dequeue();
+        }
+        else
+        {
+            return Instantiate(optionButtonPrefab);
+        }
+    }
+
+    private void ClearContent()
+    {
+        foreach(Transform child in contentParent)
+        {
+            if(child.gameObject.CompareTag("Button"))
+            {
+                child.gameObject.SetActive(false);
+                buttonPool.Enqueue(child.gameObject);
+            }
+            Destroy(child.gameObject);
+        }
+    }
+
+    // 4. 스크롤 기능 활성화
+    private void ScrollBottom()
+    {
+        // 텍스트나 이미지가 추가되면 스크롤 영역을 다시 갱신
+        Canvas.ForceUpdateCanvases();
+        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤이 아래로 자동으로 내려가도록 설정
+    }
+
+    private GameObject InstantiateOrReuse(GameObject prefabs, Transform parent)
+    {
+        GameObject instance = Instantiate(prefabs, parent);
+        instance.SetActive(true);
+        return instance;
+    }
+
+}
+
+~~~
+
 이미지 출력
 -
 ~~~C#
@@ -152,7 +296,9 @@ public class CustomLineView : DialogueViewBase
             imageObject.GetComponent<UnityEngine.UI.Image>().sprite = image;
             imageObject.SetActive(true); // 이미지 오브젝트 활성화
 
-            textObject.transform.SetSiblingIndex(1); // 텍스트 박스를 이미지 아래로 이동
+            textO
+
+bject.transform.SetSiblingIndex(1); // 텍스트 박스를 이미지 아래로 이동
         }
     }
 ~~~
