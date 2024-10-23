@@ -3,279 +3,130 @@ Custom Line View
 ~~~C#
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
-using Yarn.Unity;
 using TMPro;
-using System;
+using Yarn.Unity;
 
 public class CustomLineView : DialogueViewBase
 {
-    // UI 요소들: 텍스트, 이미지, 선택지 버튼 등이 배치될 부모 오브젝트
-    public Transform contentParent;  // 스크롤 뷰 안에 들어갈 컨텐츠(텍스트, 이미지, 선택지)
-    public GameObject textPrefab;    // 텍스트를 담을 프리팹
-    public GameObject optionButtonPrefab;  // 선택지 버튼 프리팹
-    public ScrollRect scrollRect;    // 스크롤 가능한 영역
-    private GameObject activeTextObject;  // 기존 텍스트 오브젝트를 저장할 변수
+    public Transform contentParent; // Scroll View의 Content 객체
+    public GameObject textPrefab;   // 텍스트 프리팹
+    public GameObject imagePrefab;  // 이미지 프리팹
+    public GameObject buttonPrefab; // 선택지 버튼 프리팹
+    public ScrollRect scrollRect;   // 스크롤 가능한 영역
 
-
-
-    // 대사 출력
+    // 1. 스토리 텍스트 출력
     public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-        if (textPrefab == null)
+        // ClearContent 호출을 하지 않음 -> 텍스트와 이미지를 지우지 않음
+        TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
+        
+        // 텍스트 오브젝트가 없으면 생성
+        if (storyText == null)
         {
-            Debug.LogError("textPrefab이 설정되지 않았습니다!");
-            return;
-        }
-
-        if (contentParent == null)
-        {
-            Debug.LogError("contentParent가 설정되지 않았습니다!");
-            return;
-        }
-
-        // 기존 텍스트 오브젝트가 있는지 contentParent의 자식 오브젝트에서 확인
-        TextMeshProUGUI textComponent = contentParent.GetComponentInChildren<TextMeshProUGUI>();
-
-        // 텍스트 오브젝트가 없으면 새로 생성
-        if (textComponent == null)
-        {
+            Debug.Log("스토리 텍스트가 없으므로 새로 생성합니다.");
             GameObject textObject = Instantiate(textPrefab, contentParent);
-            textComponent = textObject.GetComponent<TextMeshProUGUI>();
-        }
-
-        if (textComponent == null)
-        {
-            Debug.LogError("Text 컴포넌트를 찾을 수 없습니다!");
-            return;
-        }
-
-        // 텍스트 업데이트
-        textComponent.text = line.TextWithoutCharacterName.Text;
-
-        // 대사 출력 완료 후 콜백 호출
-        onDialogueLineFinished();
-
-        // 스크롤 위치 갱신
-        UpdateScrollPosition();
-    }
-
-
-    // 스크롤 업데이트 함수
-    private void UpdateScrollPosition()
-    {
-        Canvas.ForceUpdateCanvases();
-        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤이 아래로 이동
-    }
-
-    // 3. 선택지 출력
-    public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
-{
-    Debug.Log($"RunOptions 호출됨. 선택지 개수: {options.Length}");
-
-    foreach (Transform child in contentParent)
-    {
-        if (child.GetComponent<Button>())
-        {
-            Destroy(child.gameObject);
-        }
-    }
-
-    for (int i = 0; i < options.Length; i++)
-    {
-        Debug.Log($"선택지 {i + 1}: {options[i].Line.TextWithoutCharacterName.Text}");
-
-        int optionIndex = i;
-        GameObject button = Instantiate(optionButtonPrefab, contentParent);
-
-        // 버튼이 비활성화된 경우 강제 활성화
-        button.SetActive(true);
-
-        TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
-        if (buttonText != null)
-        {
-            buttonText.text = options[i].Line.TextWithoutCharacterName.Text;
-            Debug.Log($"선택지 버튼 생성됨: {buttonText.text}");
+            storyText = textObject.GetComponent<TextMeshProUGUI>();
         }
         else
         {
-            Debug.LogError("Button에 TextMeshProUGUI 컴포넌트가 없습니다.");
+            Debug.Log("기존 스토리 텍스트를 사용합니다.");
         }
-
-        button.GetComponent<Button>().onClick.AddListener(() => {
-            onOptionSelected(optionIndex);
-            ClearOptions();
-        });
-    }
-
-    scrollRect.verticalNormalizedPosition = 1f;
-}
-
-
-
-
-    // 선택지 제거
-    private void ClearOptions()
-    {
-        foreach (Transform child in contentParent)
-        {
-            if (child.GetComponent<Button>())
-            {
-                Destroy(child.gameObject);
-            }
-        }
-    }
-
-    // 4. 스크롤 기능 활성화
-    private void Update()
-    {
-        // 텍스트나 이미지가 추가되면 스크롤 영역을 다시 갱신
-        Canvas.ForceUpdateCanvases();
-        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤이 아래로 자동으로 내려가도록 설정
-    }
-}
-~~~
-
-~~~C#
-using UnityEngine;
-using UnityEngine.UI;
-using System.Collections.Generic;
-using Yarn.Unity;
-using TMPro;
-using System;
-
-public class CustomLineView : DialogueViewBase
-{
-    // UI 요소들: 텍스트, 이미지, 선택지 버튼 등이 배치될 부모 오브젝트
-    public Transform contentParent;  // 스크롤 뷰 안에 들어갈 컨텐츠(텍스트, 이미지, 선택지)
-    public GameObject textPrefab;    // 텍스트를 담을 프리팹
-    public GameObject imagePrefab;   // 이미지를 담을 프리펩
-    public GameObject optionButtonPrefab;  // 선택지 버튼 프리팹
-    public ScrollRect scrollRect;    // 스크롤 가능한 영역
-    private GameObject activeTextObject;  // 기존 텍스트 오브젝트를 저장할 변수
-
-    private Queue<GameObject> buttonPool = new Queue<GameObject>();
-
-    // 대사 출력
-    public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
-    {
-        ClearContent();
-
-        if (textPrefab == null)
-        {
-            Debug.LogError("textPrefab이 설정되지 않았습니다!");
-            return;
-        }
-
-        if (contentParent == null)
-        {
-            Debug.LogError("contentParent가 설정되지 않았습니다!");
-            return;
-        }
-
-        GameObject textObject = InstantiateOrReuse(textPrefab, contentParent);
-        TextMeshProUGUI storyText = textObject.GetComponent<TextMeshProUGUI>();
+        storyText.gameObject.SetActive(true);  // 비활성화된 경우 활성화
         storyText.text = line.TextWithoutCharacterName.Text;
 
+        // 콜백 호출
         onDialogueLineFinished();
-        ScrollBottom();
+        ScrollToBottom();  // 스크롤을 하단으로 이동
     }
 
+    // 2. 이미지 출력 명령어 처리
     [YarnCommand("show_image")]
     public void ShowImage(string imageName)
     {
-        GameObject imageObject = Instantiate(imagePrefab, contentParent);
-        Image imageComponent = imageObject.GetComponent<Image>();
+        // ClearContent 호출을 하지 않음 -> 이미지와 텍스트를 지우지 않음
+        Image imageComponent = contentParent.GetComponentInChildren<Image>();
+        
+        // 이미지 오브젝트가 없으면 생성
+        if (imageComponent == null)
+        {
+            Debug.Log("이미지 오브젝트가 없으므로 새로 생성합니다.");
+            GameObject imageObject = Instantiate(imagePrefab, contentParent);
+            imageComponent = imageObject.GetComponent<Image>();
+        }
+        else
+        {
+            Debug.Log("기존 이미지 오브젝트를 사용합니다.");
+        }
+        imageComponent.gameObject.SetActive(true);  // 비활성화된 경우 활성화
+
+        // Resources 폴더에서 이미지 로드
         Sprite image = Resources.Load<Sprite>($"Images/{imageName}");
-        if(image != null)
+        if (image != null)
         {
             imageComponent.sprite = image;
         }
         else
         {
-            Debug.LogError($"이미지 '{imageName}을 찾을 수 없습니다 경로를 확인하세요");
+            Debug.LogError($"이미지 '{imageName}'을(를) 찾을 수 없습니다.");
         }
-
     }
 
-    [YarnCommand("hide_image")]
-    public void HideImage()
-    {
-        imagePrefab.SetActive(false);
-    }
-    // 3. 선택지 출력
+    // 3. 선택지 버튼 생성 및 출력
     public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
     {
-        Debug.Log($"RunOptions 호출됨. 선택지 개수: {options.Length}");
+        Debug.Log($"선택지 출력 시작, 총 {options.Length}개의 선택지");
 
-        ClearContent();
-
-        if(!contentParent.gameObject.activeInHierarchy)
+        // ClearContent 함수로 버튼만 삭제 (이미지나 텍스트는 삭제하지 않음)
+        foreach (Transform child in contentParent)
         {
-            contentParent.gameObject.SetActive(true);
+            if (child.GetComponent<Button>() != null)
+            {
+                Destroy(child.gameObject);  // 기존 버튼 삭제
+            }
         }
 
         for (int i = 0; i < options.Length; i++)
         {
-            Debug.Log($"선택지 {i + 1}: {options[i].Line.TextWithoutCharacterName.Text}");
-
             int optionIndex = i;
+            GameObject buttonObject = Instantiate(buttonPrefab, contentParent); // 선택지 버튼 생성
+            buttonObject.SetActive(true); // 비활성화된 경우 활성화
 
-            GameObject button = GetOrCreateButton();
-            button.transform.SetParent(contentParent, false);
-            button.SetActive(true);
+            TextMeshProUGUI buttonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+            {
+                buttonText.text = options[i].Line.TextWithoutCharacterName.Text;
+            }
+            else
+            {
+                Debug.LogError("버튼에 TextMeshProUGUI 컴포넌트를 찾을 수 없습니다.");
+            }
 
-            TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
-            buttonText.text = options[i].Line.TextWithoutCharacterName.Text;
-
-            button.GetComponent<Button>().onClick.AddListener(() => {
+            buttonObject.GetComponent<Button>().onClick.AddListener(() => {
                 onOptionSelected(optionIndex);
-                ClearContent();
+                ClearButtons();  // 선택지 선택 후 버튼만 삭제
             });
         }
-        ScrollBottom();
+        ScrollToBottom();  // 스크롤을 하단으로 이동
     }
 
-    private GameObject GetOrCreateButton()
+    // 기존 선택지 버튼만 삭제하는 함수
+    private void ClearButtons()
     {
-        if(buttonPool.Count > 0)
+        foreach (Transform child in contentParent)
         {
-            return buttonPool.Dequeue();
-        }
-        else
-        {
-            return Instantiate(optionButtonPrefab);
-        }
-    }
-
-    private void ClearContent()
-    {
-        foreach(Transform child in contentParent)
-        {
-            if(child.gameObject.CompareTag("Button"))
+            if (child.GetComponent<Button>() != null)
             {
-                child.gameObject.SetActive(false);
-                buttonPool.Enqueue(child.gameObject);
+                Destroy(child.gameObject);  // 기존 버튼 삭제
             }
-            Destroy(child.gameObject);
         }
     }
 
-    // 4. 스크롤 기능 활성화
-    private void ScrollBottom()
+    // 스크롤을 하단으로 이동시키는 함수
+    private void ScrollToBottom()
     {
-        // 텍스트나 이미지가 추가되면 스크롤 영역을 다시 갱신
-        Canvas.ForceUpdateCanvases();
-        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤이 아래로 자동으로 내려가도록 설정
+        Canvas.ForceUpdateCanvases();  // 강제로 UI 업데이트
+        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤을 맨 아래로 이동
     }
-
-    private GameObject InstantiateOrReuse(GameObject prefabs, Transform parent)
-    {
-        GameObject instance = Instantiate(prefabs, parent);
-        instance.SetActive(true);
-        return instance;
-    }
-
 }
 
 ~~~
