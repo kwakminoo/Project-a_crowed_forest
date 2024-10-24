@@ -103,22 +103,9 @@ public class CustomLineView : DialogueViewBase
 
             buttonObject.GetComponent<Button>().onClick.AddListener(() => {
                 onOptionSelected(optionIndex);
-                ClearButtons();  // 선택지 선택 후 버튼만 삭제
             });
         }
         ScrollToBottom();  // 스크롤을 하단으로 이동
-    }
-
-    // 기존 선택지 버튼만 삭제하는 함수
-    private void ClearButtons()
-    {
-        foreach (Transform child in contentParent)
-        {
-            if (child.GetComponent<Button>() != null)
-            {
-                Destroy(child.gameObject);  // 기존 버튼 삭제
-            }
-        }
     }
 
     // 스크롤을 하단으로 이동시키는 함수
