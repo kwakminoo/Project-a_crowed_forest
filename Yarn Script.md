@@ -14,6 +14,7 @@ public class CustomLineView : DialogueViewBase
     public GameObject textPrefab;   // 텍스트 프리팹
     public GameObject imagePrefab;  // 이미지 프리팹
     public GameObject buttonPrefab; // 선택지 버튼 프리팹
+    public GameObject countinueButtonPrefab; //컨티뉴 버튼 프리펩
     public ScrollRect scrollRect;   // 스크롤 가능한 영역
     public Button countinueButton;
 
@@ -23,10 +24,26 @@ public class CustomLineView : DialogueViewBase
 
     public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-        countinueButton.gameObject.SetActive(true);
+        CreateCountinueButton(line, onDialogueLineFinished);
+        StartCoroutine(TypeLine(line, onDialogueLineFinished));
+    }
+
+    private void CreateCountinueButton(LocalizedLine line, System.Action onDialogueLineFinished)
+    {
+        if(countinueButton != null)
+        {
+            Destroy(countinueButton.gameObject);
+            countinueButton = null;
+        }
+
+        //컨티뉴 버튼 생성
+        GameObject buttonObject = Instantiate(countinueButtonPrefab, contentParent);
+        countinueButton = buttonObject.GetComponent<Button>();
+
         countinueButton.onClick.RemoveAllListeners();
         countinueButton.onClick.AddListener(() => CompleteTyping(line, onDialogueLineFinished));
-        StartCoroutine(TypeLine(line, onDialogueLineFinished));
+
+        countinueButton.gameObject.SetActive(true);
     }
 
     // 1. 스토리 텍스트 출력
@@ -41,7 +58,7 @@ public class CustomLineView : DialogueViewBase
         foreach (Transform child in contentParent)
         {
             Button button = child.GetComponent<Button>();
-            if(button != null)
+            if(button != null && button != countinueButton)
             {
                 child.gameObject.SetActive(false);
             }
@@ -63,7 +80,6 @@ public class CustomLineView : DialogueViewBase
         storyText.gameObject.SetActive(true);  // 비활성화된 경우 활성화
         storyText.text = line.TextWithoutCharacterName.Text;
         storyText.text = "";
-        countinueButton.gameObject.SetActive(true);
 
         foreach(char latter in fullText.ToCharArray())
         {
@@ -101,7 +117,13 @@ public class CustomLineView : DialogueViewBase
         {
             onDialogueLineFinished();
         }
-        countinueButton.gameObject.SetActive(false);
+        
+        
+        if(countinueButton = null)
+        {
+            Destroy(countinueButton.gameObject);
+            countinueButton = null;
+        }
     }
 
     // 2. 이미지 출력 명령어 처리
@@ -136,6 +158,11 @@ public class CustomLineView : DialogueViewBase
         }
     }
 
+    [YarnCommand("hide_image")]
+    public void HideImage(string imageName)
+    {
+        imagePrefab.SetActive(false);
+    }
     // 3. 선택지 버튼 생성 및 출력
     public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
     {
