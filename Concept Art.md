@@ -7,6 +7,7 @@
 ![검은 숲 마을 낮](https://github.com/user-attachments/assets/5f599272-5aaf-4221-a0af-9d376706a3f4)
 ![검은 숲 전투배경](https://github.com/user-attachments/assets/1ef017c5-b6b4-40d1-84dd-e27901c25c9d)
 ![검은 숲길](https://github.com/user-attachments/assets/fb0d1436-f59e-44ac-acc8-4d97f324848c)
+![황색성역 숲길 전투배경](https://github.com/user-attachments/assets/ca6f7f44-7b47-4e4b-b7a7-6aacbf689541)
 
 
 
