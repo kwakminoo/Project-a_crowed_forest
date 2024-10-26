@@ -14,38 +14,39 @@ public class CustomLineView : DialogueViewBase
     public GameObject textPrefab;   // 텍스트 프리팹
     public GameObject imagePrefab;  // 이미지 프리팹
     public GameObject buttonPrefab; // 선택지 버튼 프리팹
-    public GameObject countinueButtonPrefab; //컨티뉴 버튼 프리펩
     public ScrollRect scrollRect;   // 스크롤 가능한 영역
-    public Button countinueButton;
+    private System.Action onDialogueLineFinishedCallBack;
 
     public float typingSpeed = 0.05f;
     private bool isTyping = false;
     private string fullText;
 
+    void Start()
+    {
+        var dialogueRunner = FindObjectOfType<DialogueRunner>();
+        if(dialogueRunner != null)
+        {
+            dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
+            //dialogueRunner.AddCommandHandler<string>("hide_image", HideImage);
+        }
+        else
+        {
+            Debug.LogError("다이얼로그 러너를 찾을 수 없습니다");
+        }
+    }
+
     public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-        CreateCountinueButton(line, onDialogueLineFinished);
+        onDialogueLineFinishedCallBack = onDialogueLineFinished;
+
+        scrollRect.GetComponent<Button>().onClick.RemoveAllListeners();
+        scrollRect.GetComponent<Button>().onClick.AddListener(() => CompleteTyping());
+
+
+        //CreateCountinueButton(line, onDialogueLineFinished);
         StartCoroutine(TypeLine(line, onDialogueLineFinished));
     }
-
-    private void CreateCountinueButton(LocalizedLine line, System.Action onDialogueLineFinished)
-    {
-        if(countinueButton != null)
-        {
-            Destroy(countinueButton.gameObject);
-            countinueButton = null;
-        }
-
-        //컨티뉴 버튼 생성
-        GameObject buttonObject = Instantiate(countinueButtonPrefab, contentParent);
-        countinueButton = buttonObject.GetComponent<Button>();
-
-        countinueButton.onClick.RemoveAllListeners();
-        countinueButton.onClick.AddListener(() => CompleteTyping(line, onDialogueLineFinished));
-
-        countinueButton.gameObject.SetActive(true);
-    }
-
+    
     // 1. 스토리 텍스트 출력
     private IEnumerator TypeLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
@@ -58,7 +59,7 @@ public class CustomLineView : DialogueViewBase
         foreach (Transform child in contentParent)
         {
             Button button = child.GetComponent<Button>();
-            if(button != null && button != countinueButton)
+            if(button != null)
             {
                 child.gameObject.SetActive(false);
             }
@@ -91,7 +92,7 @@ public class CustomLineView : DialogueViewBase
         isTyping = false;
         storyText.text = fullText;
         // 콜백 호출
-        onDialogueLineFinished();
+        onDialogueLineFinishedCallBack?.Invoke();
 
         foreach(Transform child in contentParent)
         {
@@ -105,7 +106,7 @@ public class CustomLineView : DialogueViewBase
         ScrollToBottom();  // 스크롤을 하단으로 이동
     }
 
-    private void CompleteTyping(LocalizedLine line, System.Action onDialogueLineFinished)
+    private void CompleteTyping()
     {
         if (isTyping)
         {
@@ -115,54 +116,39 @@ public class CustomLineView : DialogueViewBase
         }
         else
         {
-            onDialogueLineFinished();
-        }
-        
-        
-        if(countinueButton = null)
-        {
-            Destroy(countinueButton.gameObject);
-            countinueButton = null;
+            onDialogueLineFinishedCallBack?.Invoke();
         }
     }
 
     // 2. 이미지 출력 명령어 처리
-    [YarnCommand("show_image")]
     public void ShowImage(string imageName)
     {
-        // ClearContent 호출을 하지 않음 -> 이미지와 텍스트를 지우지 않음
-        Image imageComponent = contentParent.GetComponentInChildren<Image>();
-        
-        // 이미지 오브젝트가 없으면 생성
-        if (imageComponent == null)
-        {
-            Debug.Log("이미지 오브젝트가 없으므로 새로 생성합니다.");
-            GameObject imageObject = Instantiate(imagePrefab, contentParent);
-            imageComponent = imageObject.GetComponent<Image>();
-        }
-        else
-        {
-            Debug.Log("기존 이미지 오브젝트를 사용합니다.");
-        }
-        imageComponent.gameObject.SetActive(true);  // 비활성화된 경우 활성화
-
         // Resources 폴더에서 이미지 로드
         Sprite image = Resources.Load<Sprite>($"Images/{imageName}");
-        if (image != null)
+
+        if(image == null)
         {
-            imageComponent.sprite = image;
+            Debug.LogError("{imageName}을 찾을 수 없습니다");
+            return;
         }
-        else
+
+        GameObject imageObject = Instantiate(imagePrefab, contentParent);
+        Image imageComponent = imageObject.GetComponent<Image>();
+        if(imageComponent == null)
         {
-            Debug.LogError($"이미지 '{imageName}'을(를) 찾을 수 없습니다.");
+            Debug.LogError("이미지 컴포넌트를 찾을 수 없습니다");
+            return;
         }
+        imageComponent.sprite = image;
+        imagePrefab.SetActive(true);
+        imageObject.transform.SetAsFirstSibling();
     }
 
-    [YarnCommand("hide_image")]
-    public void HideImage(string imageName)
+    /*public void HideImage(string imageName)
     {
         imagePrefab.SetActive(false);
-    }
+        Debug.Log("이미지를 삭제합니다");
+    }*/
     // 3. 선택지 버튼 생성 및 출력
     public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
     {
@@ -204,8 +190,17 @@ public class CustomLineView : DialogueViewBase
             Button button = buttonObject.GetComponent<Button>();
             button.interactable = true; // 버튼 활성화
             button.onClick.AddListener(() => {
-            Debug.Log($"버튼 {optionIndex} 클릭됨");
-            button.interactable = false;  // 클릭 후 다시 선택되지 않도록 비활성화
+                Debug.Log($"버튼 {optionIndex} 클릭됨");
+                button.interactable = false;  // 클릭 후 다시 선택되지 않도록 비활성화
+
+                foreach(Transform child in contentParent)
+                {
+                    if(child.GetComponent<Image>() != null)
+                    {
+                        Destroy(child.gameObject);
+                        Debug.Log("이미지 삭제");
+                    }
+                }
                 onOptionSelected(optionIndex);
                 
             });
@@ -220,30 +215,6 @@ public class CustomLineView : DialogueViewBase
         scrollRect.verticalNormalizedPosition = 0f;  // 스크롤을 맨 아래로 이동
     }
 }
-
-~~~
-
-이미지 출력
--
-~~~C#
-    public GameObject imageObject; // 이미지가 표시될 UI 오브젝트
-
-    [YarnCommand("show_image")]
-    // 이미지를 보여주는 함수
-    void ShowImage(string imageName)
-    {
-        // 이미지 불러오기 및 표시 로직 구현
-        var image = Resources.Load<Sprite>(imageName);
-        if (image != null)
-        {
-            imageObject.GetComponent<UnityEngine.UI.Image>().sprite = image;
-            imageObject.SetActive(true); // 이미지 오브젝트 활성화
-
-            textO
-
-bject.transform.SetSiblingIndex(1); // 텍스트 박스를 이미지 아래로 이동
-        }
-    }
 ~~~
 
 전투창 출력
