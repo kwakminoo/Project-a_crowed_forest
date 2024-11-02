@@ -6,37 +6,15 @@
 
 3. 인벤토리 시스템: 인벤토리는 플레이어가 소유한 아이템을 관리하는 리스트입니다. 리스트는 Item 객체로 구성되며, 아이템 추가, 제거, 정렬 등의 기능을 수행합니다.
 ~~~C#
-public class Item
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "New Item", menuName = "Item System/Item")]
+public class Item : ScriptableObject
 {
     public string itemName;
-    public string description;
-    public ItemType itemType;  // 장비, 소모품 등 아이템 타입
-}
-
-public class Player : MonoBehaviour
-{
-    public List<Item> inventory = new List<Item>();
-
-    public void AddItemToInventory(Item newItem)
-    {
-        inventory.Add(newItem);
-        Debug.Log(newItem.itemName + "을(를) 인벤토리에 추가했습니다.");
-    }
-}
-
-public class Inventory
-{
-    public List<Item> items = new List<Item>();
-
-    public void AddItem(Item item)
-    {
-        items.Add(item);
-    }
-
-    public void RemoveItem(Item item)
-    {
-        items.Remove(item);
-    }
+    public List<Skill> assignedSkills = new List<Skill>();
 }
 
 ~~~
