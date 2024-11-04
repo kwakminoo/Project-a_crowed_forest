@@ -99,3 +99,5 @@ public class InventoryManager : MonoBehaviour
     }
 }
 ~~~
+
+![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
