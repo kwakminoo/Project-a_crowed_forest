@@ -26,7 +26,7 @@ public class Inventory : MonoBehaviour
 
     public void UnequipWeapon(Item weapon) //선택한 무기를 해제
     {
-        if(equippedWeapon = weapon)
+        if(equippedWeapon == weapon)
         {
             equippedWeapon = null;
         }
@@ -42,6 +42,7 @@ public class Inventory : MonoBehaviour
         if(!equippedWeapons.Contains(weapon))
         {
             equippedWeapons.Add(weapon);
+            Debug.Log(weapon.itemName + "을 획득했습니다");
         }
     }
 
@@ -63,7 +64,6 @@ public class Inventory : MonoBehaviour
         return skillSlots;
     }
 }
-
 ~~~
 
 
@@ -80,11 +80,14 @@ using TMPro;
 public class InventoryManager : MonoBehaviour
 {
     [Header("UI Elements")]
+    public GameObject inventoryWindow;
     public GameObject weaponItemWindow; //무기 아이템 창
     public GameObject weaponWindow; //무기 설명창
-    public Text weaponNameText; //무기 이름
-    public Text weaponOptionText;//무기 설명 
-    public Button equipButton;// 장착/해제 버튼
+    public Image weaponIcon;//무기 아이콘
+    public TextMeshProUGUI weaponNameText; //무기 이름
+    public TextMeshProUGUI weaponOptionText;//무기 설명 
+    public Button equipButton;// 장착버튼
+    public Button unequipButton;
 
     [Header("Equipment Slots")]
     public Button weaponSlot; //무기 잗착 칸
@@ -98,6 +101,17 @@ public class InventoryManager : MonoBehaviour
     public List<Button> skillSlots; //스킬 지정 칸(4개)
 
     private Inventory inventory; //Inventory 스크립트 참조
+
+    private void CloseWindow()
+    {
+        inventoryWindow.SetActive(false);
+    }
+
+    public void OpenInventory()
+    {
+        inventoryWindow.SetActive(true);
+        PopulateWeaponItems();
+    }
 
     private void Start()
     {
@@ -137,7 +151,7 @@ public class InventoryManager : MonoBehaviour
 
         foreach(Skill skill in availableSkills)
         {
-            skillSlot.GetComponentInChildren<Text>().text = skill.skillName;
+            skillSlot.GetComponentInChildren<TextMeshProUGUI>().text = skill.skillName;
             inventory.AssignSkillToSlot(skill, skillSlots.IndexOf(skillSlot));
 
             Transform iconTransform = skillSlot.transform.Find("Icon");
@@ -153,14 +167,21 @@ public class InventoryManager : MonoBehaviour
     private void WeaponWindow(Item weapon)
     {
         selectedWeapon = weapon;
+        weaponWindow.SetActive(true);
         weaponNameText.text = weapon.itemName;
         weaponOptionText.text = weapon.itemOption;
+        weaponIcon.sprite = weapon.itemIcon;
 
         equipButton.GetComponentInChildren<TextMeshProUGUI>().text = inventory.IsEquipped(weapon) ? "장착" : "해제";
     }
 
     private void PopulateWeaponItems()
     {
+        foreach(Transform child in weaponContent)
+        {
+            Destroy(child.gameObject);
+        }
+
         foreach(Item weapon in inventory.equippedWeapons)
         {
             GameObject slot = Instantiate(weaponItemSlotPrefabs, weaponContent);
