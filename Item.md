@@ -22,6 +22,7 @@ public class Inventory : MonoBehaviour
         equippedWeapon = weapon;
         equippedSkills.Clear();
         equippedSkills.AddRange(weapon.assignedSkills);
+        Debug.Log(weapon.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
     }
 
     public void UnequipWeapon(Item weapon) //선택한 무기를 해제
@@ -56,6 +57,11 @@ public class Inventory : MonoBehaviour
         if(slotIndex >= 0 && slotIndex < skillSlots.Count)
         {
             skillSlots[slotIndex] = skill;
+            Debug.Log((skill != null ? skill.skillName : "스킬 없슴") + "이(가) 슬롯" + slotIndex + "할당됐습니다");
+        }
+        else
+        {
+            Debug.LogError("스킬 할당에 실패했습니다. 잘못된 스킬 인덱스:" + slotIndex);
         }
     }
 
