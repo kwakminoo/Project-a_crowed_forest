@@ -7,14 +7,28 @@ using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
+    public static Inventory Instance { get; private set; }
     public List<Skill> equippedSkills = new List<Skill>(); //장착된 스킬 목록
     public Item equippedWeapon; //장착된 무기
-    public List<Skill> skillSlots = new List<Skill>(4); //전투에 사용할 스킬 슬롯
+    public List<Skill> skillSlots = new List<Skill>(); //전투에 사용할 스킬 슬롯
     public List<Item> equippedWeapons = new List<Item>(); //플레이어가 얻은 무기 목록
 
     private void Start()
     {
         skillSlots = new List<Skill>{null, null, null, null};
+    }
+
+    private void Awake()
+    {
+        if(Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); //씬 전환에도 유지하도록
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     public void EquipWeapon(Item weapon) //선택한 무기를 장착
@@ -47,17 +61,38 @@ public class Inventory : MonoBehaviour
         }
     }
 
+    public void ClearSkillSlots()
+    {
+        for(int i = 0; i < skillSlots.Count; i++)
+        {
+            skillSlots[i] = null;
+        }
+
+        Debug.Log("스킬 슬롯 초기화");
+    }
+
     public List<Skill> GetEquippedWeaponSkills()
     {
         return equippedWeapon != null ? equippedWeapon.assignedSkills : new List<Skill>();
     }
 
+    public bool IsSkillAlreadyEquipped(Skill skill)
+    {
+        return skillSlots.Contains(skill);
+    }
+
     public void AssignSkillToSlot(Skill skill, int slotIndex)
     {
+        Debug.Log("AssignSkillToSlot 호출됨, slotIndex:" + slotIndex);
         if(slotIndex >= 0 && slotIndex < skillSlots.Count)
         {
             skillSlots[slotIndex] = skill;
             Debug.Log((skill != null ? skill.skillName : "스킬 없슴") + "이(가) 슬롯" + slotIndex + "할당됐습니다");
+
+            for(int i = 0; i < skillSlots.Count; i ++)
+            {
+                Debug.Log("슬롯" + i + (skillSlots[i] != null ? skillSlots[i].skillName : "비어있습니다"));
+            }
         }
         else
         {
@@ -70,6 +105,7 @@ public class Inventory : MonoBehaviour
         return skillSlots;
     }
 }
+
 ~~~
 
 
@@ -132,11 +168,24 @@ public class InventoryManager : MonoBehaviour
 
     public void Start()
     {
-        inventory = FindObjectOfType<Inventory>(); //Inventory 스크립트 참조
+        inventory = Inventory.Instance;
+
+        /*Debug.Log("skillSlots 상태:");
+        for(int i =0; i < skillSlots.Count; i++)
+        {
+            Debug.Log("skillSlots["+i+"]: " + (skillSlots[i] != null ? skillSlots[i].name : "null"));
+        }
+
+        Debug.Log("skillSlotIcon 상태:");
+        for(int i =0; i < skillSlotIcon.Count; i++)
+        {
+            Debug.Log("skillSlotIcon["+i+"]: " + (skillSlotIcon[i] != null ? skillSlotIcon[i].name : "null"));
+        }*/
 
         //스킬 슬롯 클릭 시 무기에 할당된 스킬 목록 열기
         foreach(Button skillSlot in skillSlots)
         {
+            skillSlot.onClick.RemoveAllListeners();
             skillSlot.onClick.AddListener(() => OpenSkillSelection(skillSlot));
         }
 
@@ -167,6 +216,7 @@ public class InventoryManager : MonoBehaviour
         }
         
         UpdateSkillSlot(selectedWeapon.assignedSkills);
+        CloseSkillSlot();
         weaponWindow.SetActive(false);
         weaponItemWindow.SetActive(false);
     }
@@ -193,13 +243,15 @@ public class InventoryManager : MonoBehaviour
                 skillIcon.enabled = false;
             }
         }
+
+        inventory.ClearSkillSlots();
     }
 
     public void UpdateSkillSlot(List<Skill> skills)
     {
         for(int i = 0; i < skillSlotIcon.Count; i++)
         {
-            if(i <skills.Count)
+            if(i <skills.Count && skillSlots[i] != null)
             {
                 skillSlotIcon[i].sprite = skills[i].skillIcon;
                 skillSlotIcon[i].enabled = true;
@@ -215,7 +267,8 @@ public class InventoryManager : MonoBehaviour
     public void OpenSkillSelection(Button skillSlot)
     {
         selectSkillSlot = skillSlot;
-        //무기에 할당된 스킬을 보여주고 플레이어가 선택한 스킬을 지정
+        Debug.Log("선택한 스킬 슬롯: " + selectSkillSlot.name);
+        
         List<Skill> availableSkills = inventory.GetEquippedWeaponSkills();
         if(availableSkills.Count == 0)
         {
@@ -249,7 +302,23 @@ public class InventoryManager : MonoBehaviour
 
     public void EquipSkill()
     {
+        Debug.Log("Inevntory 참조 확인:" + (inventory != null ? "정상" : "null"));
+
+        if(selectSkillSlot == null || selectedSkill == null || inventory == null) return;
+
         int skillIndex = skillSlots.IndexOf(selectSkillSlot);
+
+        int exitingIndex = inventory.skillSlots.IndexOf(selectedSkill);
+        if(exitingIndex >= 0 && exitingIndex < skillSlotIcon.Count &&exitingIndex != skillIndex)
+        {
+            inventory.AssignSkillToSlot(null, exitingIndex);
+            skillSlotIcon[exitingIndex].sprite = null;
+            skillSlotIcon[exitingIndex].enabled = false;
+            Debug.Log("기존 슬롯" + exitingIndex + "에서 스킬이 해제됬습니다");
+        }
+        
+        Debug.Log("선택된 슬롯 인덱스: " + skillIndex);
+
         if(skillIndex >= 0 && skillIndex < skillSlotIcon.Count)
         {
             inventory.AssignSkillToSlot(selectedSkill, skillIndex);
@@ -312,6 +381,7 @@ public class InventoryManager : MonoBehaviour
         } 
     }
 }
+
 ~~~
 
 ![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
