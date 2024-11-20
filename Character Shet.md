@@ -1,3 +1,184 @@
+Player
+-
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
+
+public class Player : MonoBehaviour
+{
+    public static Player Instance { get; private set;} //싱글톤 패턴
+
+    [Header("Character Info")]
+    public string characterName = "레이븐 드레이크"; //플레이어 이름
+    public Sprite characterSprite; //플레이어 캐릭터 이미지
+    public int maxHP = 100; //최대 체력
+    public int currentHP; //현재 체력
+    public int level = 1; //플레이어 레벨
+    public int experience = 0; // 경험치
+    public  int experienceToNextLevel = 100; //레벨업까지 필요 경험치
+
+    [Header("Skills")]
+    public List<Skill> equippedSkills = new List<Skill>(); //장착된 스킬
+
+    [Header("Weapon")]
+    public Item equippedWeapon; //장착된 무기
+    public List<Skill> weaponSkills => equippedWeapon != null ? equippedWeapon.assignedSkills : new List<Skill>();
+
+    private void Awake()
+    {
+        if(Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void Start()
+    {
+        currentHP = maxHP; //초기 체력 설정
+        Debug.Log($"레이븐초기화 완료. 체력: {currentHP}/{maxHP}, 레벨: {level}");
+    }
+    
+    public void ModifyHP(int amount)
+    {
+        currentHP = Mathf.Clamp(currentHP + amount, 0, maxHP);
+        Debug.Log($"레이븐 체력 변경: {currentHP}/{maxHP}");
+
+        if(currentHP <= 0)
+        {
+            Die();
+        }
+    }
+
+    public void AddExperience(int amount)
+    {
+        experience += amount;
+        Debug.Log("경험치 획득: {amount}. 현재 경험치: {experience}/{experienceToNextLevel}");
+
+        while (experience >= experienceToNextLevel)
+        {
+            LevelUp();
+        }
+    }
+
+    private void LevelUp()
+    {
+        experience -= experienceToNextLevel;
+        level++;
+        maxHP += 10; //최대 체력 증가
+        currentHP = maxHP; //체력 회복
+        experienceToNextLevel += 50; //레벨업마다 필요 경험치 증가
+
+        Debug.Log($"레벨업! 현재 레벨: {level}, 최대 체력: {maxHP}");
+    }
+
+    private void Die()
+    {
+        Debug.Log("YOU DIE");
+    }
+
+    public List<Skill> GetSkills()
+    {
+        return equippedSkills;
+    }
+
+    public void EquipSkill(Skill skill)
+    {
+        if(!equippedSkills.Contains(skill))
+        {
+            equippedSkills.Add(skill);
+            Debug.Log($"{skill.skillName} 장착됨");
+        }
+        else
+        {
+            Debug.Log($"{skill.skillName}은 이미 장착중입니다");
+        }
+    }
+    
+    public void UnequipSkill(Skill skill)
+    {
+        if(equippedSkills.Contains(skill))
+        {
+            equippedSkills.Remove(skill);
+            Debug.Log($"{skill.skillName} 해제됨");
+        }
+        else
+        {
+            Debug.Log($"{skill.skillName}은 장착되있지 않습니다");
+        }
+    }
+}
+~~~
+
+Enemy Sprite
+-
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using Unity.Mathematics;
+using UnityEngine;
+
+public class EnemyScript : MonoBehaviour
+{
+    public EnemyData enemyData;
+
+    [HideInInspector]
+    public int currentHP; //현재 체력
+    
+    private void Awake()
+    {
+        if(enemyData != null)
+        {
+            InitializeEnemy(enemyData);
+        }
+    }
+
+    //적 데이터 초기화
+    public void InitializeEnemy(EnemyData data)
+    {
+        enemyData = data;
+        currentHP = data.maxHP;
+        Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
+    }
+
+    //체력 변경 메소드
+    public void ModifyHP(int amount)
+    {
+        currentHP = Mathf.Clamp(currentHP + amount, 0, enemyData.maxHP);
+        Debug.Log($"{enemyData.enemyName}의 체력: {currentHP}/{enemyData.maxHP}");
+    }
+
+    //스킬 가져오기
+    public List<Skill> GetSkills()
+    {
+        return enemyData.skills;
+    }
+}
+~~~
+
+enemy Data
+-
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "New Enemy", menuName = "Enemy System/Enemy Data")]
+public class EnemyData : ScriptableObject
+{
+    public string enemyName; //적 이름
+    public Sprite enemySprite; //적 이미지
+    public int maxHP; //적 최대 체력
+    public List<Skill> skills; //적이 사용할 스킬
+}
+~~~
+
 레이븐 드레이크
 -
 ![레이븐 드레이크](https://github.com/user-attachments/assets/fad16a47-38d0-4271-bf97-af7534e1c8d2)
