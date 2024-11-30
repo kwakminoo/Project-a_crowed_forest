@@ -5,6 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
+using UnityEngine.UIElements;
+using System;
 
 public class Player : MonoBehaviour
 {
@@ -18,13 +20,11 @@ public class Player : MonoBehaviour
     public int level = 1; //플레이어 레벨
     public int experience = 0; // 경험치
     public  int experienceToNextLevel = 100; //레벨업까지 필요 경험치
-
-    [Header("Skills")]
-    public List<Skill> equippedSkills = new List<Skill>(); //장착된 스킬
+    public event Action OnPlayerDeath; //플레이어가 죽었을 때 이벤트
 
     [Header("Weapon")]
     public Item equippedWeapon; //장착된 무기
-    public List<Skill> weaponSkills => equippedWeapon != null ? equippedWeapon.assignedSkills : new List<Skill>();
+    public List<Skill> skillSlots = new List<Skill>(4);
 
     private void Awake()
     {
@@ -42,13 +42,18 @@ public class Player : MonoBehaviour
     private void Start()
     {
         currentHP = maxHP; //초기 체력 설정
-        Debug.Log($"레이븐초기화 완료. 체력: {currentHP}/{maxHP}, 레벨: {level}");
+        
+        //스킬 슬롯 초기화
+        for(int i = 0; i < 4; i++)
+        {
+            skillSlots.Add(null);
+        }
     }
     
-    public void ModifyHP(int amount)
+    public void TakeDamge(int damge)
     {
-        currentHP = Mathf.Clamp(currentHP + amount, 0, maxHP);
-        Debug.Log($"레이븐 체력 변경: {currentHP}/{maxHP}");
+        currentHP -= damge;
+        Debug.Log($"레이븐이 {damge}의 데미지를 받았습니다");
 
         if(currentHP <= 0)
         {
@@ -81,37 +86,12 @@ public class Player : MonoBehaviour
     private void Die()
     {
         Debug.Log("YOU DIE");
+        OnPlayerDeath?.Invoke();
     }
 
-    public List<Skill> GetSkills()
+    public List<Skill> GetBattleSkills()
     {
-        return equippedSkills;
-    }
-
-    public void EquipSkill(Skill skill)
-    {
-        if(!equippedSkills.Contains(skill))
-        {
-            equippedSkills.Add(skill);
-            Debug.Log($"{skill.skillName} 장착됨");
-        }
-        else
-        {
-            Debug.Log($"{skill.skillName}은 이미 장착중입니다");
-        }
-    }
-    
-    public void UnequipSkill(Skill skill)
-    {
-        if(equippedSkills.Contains(skill))
-        {
-            equippedSkills.Remove(skill);
-            Debug.Log($"{skill.skillName} 해제됨");
-        }
-        else
-        {
-            Debug.Log($"{skill.skillName}은 장착되있지 않습니다");
-        }
+        return Inventory.Instance.GetBattleSkills();
     }
 }
 ~~~
@@ -127,9 +107,9 @@ using UnityEngine;
 public class EnemyScript : MonoBehaviour
 {
     public EnemyData enemyData;
-
-    [HideInInspector]
     public int currentHP; //현재 체력
+    public int maxHP;
+    private Animator animator;
     
     private void Awake()
     {
@@ -148,10 +128,29 @@ public class EnemyScript : MonoBehaviour
     }
 
     //체력 변경 메소드
-    public void ModifyHP(int amount)
+    public void TakeDamage(int damage)
     {
-        currentHP = Mathf.Clamp(currentHP + amount, 0, enemyData.maxHP);
-        Debug.Log($"{enemyData.enemyName}의 체력: {currentHP}/{enemyData.maxHP}");
+        currentHP -= damage;
+        Debug.Log($"{enemyData.enemyName}이(가) {damage}의 데미지를 받았습니다");
+
+        if(currentHP <= 0)
+        {
+            Die();
+        }
+    }
+
+    public void Die()
+    {
+        if(enemyData.deathAnimation != null)
+        {
+            Debug.Log($"{enemyData.enemyName}이(가) 쓰러졌습니다");
+            Animator animator = GetComponent<Animator>();
+            if(animator != null)
+            {
+                animator.Play(enemyData.deathAnimation.name);
+            }
+        }
+
     }
 
     //스킬 가져오기
