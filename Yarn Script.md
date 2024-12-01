@@ -1,228 +1,168 @@
 Custom Line View
 -
 ~~~C#
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Yarn.Unity;
-using Yarn;
-using System.Collections;
 
-public class CustomLineView : DialogueViewBase
+public class CustemLineView : DialogueViewBase
 {
-    public Transform contentParent; // Scroll View의 Content 객체
-    public GameObject textPrefab;   // 텍스트 프리팹
-    public GameObject imagePrefab;  // 이미지 프리팹
-    public GameObject buttonPrefab; // 선택지 버튼 프리팹
-    public ScrollRect scrollRect;   // 스크롤 가능한 영역
-    private System.Action onDialogueLineFinishedCallBack;
+    public RectTransform contentParent; // Content 오브젝트 참조
+    public Image imagePrefab;           // 이미지 프리팹 참조 (Inspector에서 설정)
+    public TextMeshProUGUI textPrefab;  // 텍스트 프리팹 참조 (Inspector에서 설정)
+    public Button buttonPrefab;         // 버튼 프리팹 참조 (Inspector에서 설정)
 
-    public float typingSpeed = 0.05f;
-    private bool isTyping = false;
-    private string fullText;
+    private List<Button> activeButtons = new List<Button>();  // 현재 활성화된 버튼 목록
 
     void Start()
     {
-        var dialogueRunner = FindObjectOfType<DialogueRunner>();
-        if(dialogueRunner != null)
+        // 계층에 있는 오브젝트들을 초기화할 때 비활성화 상태로 설정
+        foreach (Transform child in contentParent)
         {
-            dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-            dialogueRunner.AddCommandHandler<string, string, string>("start_Battle", StartBattleCommand);
-        }
-        else
-        {
-            Debug.LogError("다이얼로그 러너를 찾을 수 없습니다");
+            if (child.GetComponent<Button>())
+            {
+                child.gameObject.SetActive(false);  // 버튼 비활성화
+            }
         }
     }
 
+    // 다이얼로그 텍스트 출력
     public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-        onDialogueLineFinishedCallBack = onDialogueLineFinished;
-
-        scrollRect.GetComponent<Button>().onClick.RemoveAllListeners();
-        scrollRect.GetComponent<Button>().onClick.AddListener(() => CompleteTyping());
-
-
-        //CreateCountinueButton(line, onDialogueLineFinished);
-        StartCoroutine(TypeLine(line, onDialogueLineFinished));
-    }
-    
-    // 1. 스토리 텍스트 출력
-    private IEnumerator TypeLine(LocalizedLine line, System.Action onDialogueLineFinished)
-    {
-
-        isTyping = true;
-        fullText = line.TextWithoutCharacterName.Text;
-        // ClearContent 호출을 하지 않음 -> 텍스트와 이미지를 지우지 않음
-        TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
-
-        foreach (Transform child in contentParent)
-        {
-            Button button = child.GetComponent<Button>();
-            if(button != null)
-            {
-                child.gameObject.SetActive(false);
-            }
-        }
-
-        // 텍스트 오브젝트가 없으면 생성
-        if (storyText == null)
-        {
-            Debug.Log("스토리 텍스트가 없으므로 새로 생성합니다.");
-            GameObject textObject = Instantiate(textPrefab, contentParent);
-            storyText = textObject.GetComponent<TextMeshProUGUI>();
-            
-        }
-        else
-        {
-            Debug.Log("기존 스토리 텍스트를 사용합니다.");
-            
-        }
-        storyText.gameObject.SetActive(true);  // 비활성화된 경우 활성화
-        storyText.text = line.TextWithoutCharacterName.Text;
-        storyText.text = "";
-
-        foreach(char latter in fullText.ToCharArray())
-        {
-            if(!isTyping) break;
-            storyText.text += latter;
-            yield return new WaitForSeconds(typingSpeed);
-        }
-
-        isTyping = false;
-        storyText.text = fullText;
-        // 콜백 호출
-        onDialogueLineFinishedCallBack?.Invoke();
-
-        foreach(Transform child in contentParent)
-        {
-            Button button = child.GetComponent<Button>();
-            if(button != null)
-            {
-                child.gameObject.SetActive(true);
-            }
-        }
-
-        ScrollToBottom();  // 스크롤을 하단으로 이동
+        // 텍스트 출력
+        DisplayStoryText(line.TextWithoutCharacterName.Text);
+        onDialogueLineFinished?.Invoke(); // 라인 출력 완료 시 콜백 호출
     }
 
-    private void CompleteTyping()
-    {
-        if (isTyping)
-        {
-            isTyping = false;
-            TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
-            storyText.text = fullText;
-        }
-        else
-        {
-            onDialogueLineFinishedCallBack?.Invoke();
-        }
-    }
-
-    // 2. 이미지 출력 명령어 처리
-    public void ShowImage(string imageName)
-    {
-        // Resources 폴더에서 이미지 로드
-        Sprite image = Resources.Load<Sprite>($"Images/{imageName}");
-
-        if(image == null)
-        {
-            Debug.LogError("{imageName}을 찾을 수 없습니다");
-            return;
-        }
-
-        GameObject imageObject = Instantiate(imagePrefab, contentParent);
-        Image imageComponent = imageObject.GetComponent<Image>();
-        if(imageComponent == null)
-        {
-            Debug.LogError("이미지 컴포넌트를 찾을 수 없습니다");
-            return;
-        }
-        imageComponent.sprite = image;
-        imagePrefab.SetActive(true);
-        imageObject.transform.SetAsFirstSibling();
-    }
-
-    public void StartBattleCommand(string enemyName, string enemySpriteName, string backGroundName)
-    {
-        var BattleManager = FindObjectOfType<BattleManager>();
-        if(BattleManager != null)
-        {
-            BattleManager.StartBattle(enemyName, enemySpriteName, backGroundName);
-        }
-        else
-        {
-            Debug.LogError("BattleManager을찾을 수 없습니다");
-        }
-    }
-    // 3. 선택지 버튼 생성 및 출력
+    // 선택지 출력
     public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
     {
+        // 선택지 버튼 출력
+        DisplayOptions(options, onOptionSelected);
+    }
 
-        Debug.Log($"선택지 출력 시작, 총 {options.Length}개의 선택지");
+    // 이미지, 텍스트, 선택지 버튼을 동시에 출력
+    public void DisplayContent(string imagePath, string storyText, DialogueOption[] options, System.Action<int> onOptionSelected)
+    {
+        // 이미지 출력
+        DisplayImage(imagePath);
 
-        // ClearContent 함수로 버튼만 삭제 (이미지나 텍스트는 삭제하지 않음)
-        foreach (Transform child in contentParent)
+        // 스토리 텍스트 출력
+        DisplayStoryText(storyText);
+
+        // 선택지 버튼 출력
+        DisplayOptions(options, onOptionSelected);
+    }
+
+    // 이미지 출력 함수
+    private void DisplayImage(string imagePath)
+    {
+        Image imageObject = GetOrCreateImage(); // 이미지 오브젝트 생성 또는 가져오기
+        Sprite newSprite = Resources.Load<Sprite>(imagePath); // Resources에서 이미지 로드
+
+        if (newSprite != null)
         {
-            if (child.GetComponent<Button>() != null)
-            {
-                Destroy(child.gameObject);  // 기존 버튼 삭제
-            }
+            imageObject.sprite = newSprite;
+            imageObject.gameObject.SetActive(true);  // 이미지 활성화
+        }
+        else
+        {
+            Debug.LogError($"이미지 '{imagePath}'를 찾을 수 없습니다.");
+        }
+    }
+
+    // 스토리 텍스트 출력 함수
+    private void DisplayStoryText(string storyText)
+    {
+        TextMeshProUGUI textObject = GetOrCreateText(); // 텍스트 오브젝트 생성 또는 가져오기
+        textObject.text = storyText;  // 텍스트 설정
+        textObject.gameObject.SetActive(true);  // 텍스트 활성화
+    }
+
+    // 선택지 버튼 출력 함수
+    private void DisplayOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
+    {
+        // 기존 버튼 비활성화
+        foreach (Button button in activeButtons)
+        {
+            button.gameObject.SetActive(false);
         }
 
+        // 필요한 수의 버튼 생성 또는 재사용
         for (int i = 0; i < options.Length; i++)
         {
-            int optionIndex = i;
-            GameObject buttonObject = Instantiate(buttonPrefab, contentParent); // 선택지 버튼 생성
-            buttonObject.SetActive(true); // 비활성화된 경우 활성화
+            Button button = GetOrCreateButton(i); // 버튼 생성 또는 재사용
+            TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
+            buttonText.text = options[i].Line.TextWithoutCharacterName.Text;  // 버튼 텍스트 설정
 
-            RectTransform rectTransfrom = buttonObject.GetComponent<RectTransform>();
-            rectTransfrom.anchoredPosition3D = Vector3.zero;
-            rectTransfrom.localScale = Vector3.one;
-
-            RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-            Debug.Log($"버튼 생성됨 {buttonObject.name}, 위치: {rectTransform.anchoredPosition}");
-
-            TextMeshProUGUI buttonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>();
-            if (buttonText != null)
-            {
-                buttonText.text = options[i].Line.TextWithoutCharacterName.Text;
-            }
-            else
-            {
-                Debug.LogError("버튼에 TextMeshProUGUI 컴포넌트를 찾을 수 없습니다.");
-            }
-
-            Button button = buttonObject.GetComponent<Button>();
-            button.interactable = true; // 버튼 활성화
+            int optionIndex = i;  // 캡처 문제 방지
+            button.onClick.RemoveAllListeners();  // 기존 리스너 제거
             button.onClick.AddListener(() => {
-                Debug.Log($"버튼 {optionIndex} 클릭됨");
-                button.interactable = false;  // 클릭 후 다시 선택되지 않도록 비활성화
-
-                foreach(Transform child in contentParent)
-                {
-                    if(child.GetComponent<Image>() != null)
-                    {
-                        Destroy(child.gameObject);
-                        Debug.Log("이미지 삭제");
-                    }
-                }
-                onOptionSelected(optionIndex);
-                
+                onOptionSelected(optionIndex);  // 선택 시 콜백 호출
+                button.gameObject.SetActive(false);  // 선택한 버튼 비활성화
             });
+
+            button.gameObject.SetActive(true);  // 버튼 활성화
         }
-        ScrollToBottom();  // 스크롤을 하단으로 이동
+
+        // 스크롤을 상단으로 초기화
+        contentParent.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1f;
     }
 
-    // 스크롤을 하단으로 이동시키는 함수
-    private void ScrollToBottom()
+    // 이미지 오브젝트 생성 또는 가져오기
+    private Image GetOrCreateImage()
     {
-        Canvas.ForceUpdateCanvases();  // 강제로 UI 업데이트
-        scrollRect.verticalNormalizedPosition = 0f;  // 스크롤을 맨 아래로 이동
+        // 이미 있는 이미지 오브젝트 사용
+        foreach (Transform child in contentParent)
+        {
+            Image image = child.GetComponent<Image>();
+            if (image != null)
+            {
+                return image;
+            }
+        }
+
+        // 없으면 새로 생성
+        Image newImage = Instantiate(imagePrefab, contentParent);
+        return newImage;
+    }
+
+    // 텍스트 오브젝트 생성 또는 가져오기
+    private TextMeshProUGUI GetOrCreateText()
+    {
+        // 이미 있는 텍스트 오브젝트 사용
+        foreach (Transform child in contentParent)
+        {
+            TextMeshProUGUI text = child.GetComponent<TextMeshProUGUI>();
+            if (text != null)
+            {
+                return text;
+            }
+        }
+
+        // 없으면 새로 생성
+        TextMeshProUGUI newText = Instantiate(textPrefab, contentParent);
+        return newText;
+    }
+
+    // 버튼 오브젝트 생성 또는 가져오기
+    private Button GetOrCreateButton(int index)
+    {
+        if (index < activeButtons.Count)
+        {
+            return activeButtons[index];  // 이미 있는 버튼 반환
+        }
+        else
+        {
+            // 새로운 버튼 생성
+            Button newButton = Instantiate(buttonPrefab, contentParent);
+            activeButtons.Add(newButton);
+            return newButton;
+        }
     }
 }
-
 ~~~
 
 
