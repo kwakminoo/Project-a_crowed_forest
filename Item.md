@@ -160,6 +160,7 @@ public class InventoryManager : MonoBehaviour
     public Button skillUnequipButton; //스킬해제 버튼
 
     private Inventory inventory; //Inventory 스크립트 참조
+    private Player player;
     public void OpenInventory()
     {
         inventoryWindow.SetActive(true);
@@ -169,6 +170,7 @@ public class InventoryManager : MonoBehaviour
     public void Start()
     {
         inventory = Inventory.Instance;
+        player = Player.Instance;
 
         /*Debug.Log("skillSlots 상태:");
         for(int i =0; i < skillSlots.Count; i++)
@@ -208,11 +210,15 @@ public class InventoryManager : MonoBehaviour
             inventory.EquipWeapon(selectedWeapon);
             Debug.Log(selectedWeapon.itemName + "장착됨");
 
+            Player.Instance.equippedWeapon = selectedWeapon;
+
             if(weaponSlotIcon != null)
             {
                 weaponSlotIcon.sprite = selectedWeapon.itemIcon;
                 weaponSlotIcon.enabled = true;
             }
+            
+            inventory.RaiseInventoryUpdatedEnent();
         }
         
         UpdateSkillSlot(selectedWeapon.assignedSkills);
@@ -307,9 +313,8 @@ public class InventoryManager : MonoBehaviour
         if(selectSkillSlot == null || selectedSkill == null || inventory == null) return;
 
         int skillIndex = skillSlots.IndexOf(selectSkillSlot);
-
         int exitingIndex = inventory.skillSlots.IndexOf(selectedSkill);
-        if(exitingIndex >= 0 && exitingIndex < skillSlotIcon.Count &&exitingIndex != skillIndex)
+        if(exitingIndex >= 0 && exitingIndex < skillSlotIcon.Count && exitingIndex != skillIndex)
         {
             inventory.AssignSkillToSlot(null, exitingIndex);
             skillSlotIcon[exitingIndex].sprite = null;
@@ -326,7 +331,10 @@ public class InventoryManager : MonoBehaviour
             skillSlotIcon[skillIndex].sprite = selectedSkill.skillIcon;
             skillSlotIcon[skillIndex].enabled = true;
 
+            Player.Instance.skillSlots = inventory.skillSlots;
             Debug.Log(selectedSkill.skillName + "이(가)" + skillIndex + "슬롯에 장착됐습니다");
+        
+            inventory.RaiseInventoryUpdatedEnent();
         } 
         else
         {
@@ -381,7 +389,6 @@ public class InventoryManager : MonoBehaviour
         } 
     }
 }
-
 ~~~
 
 ![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
