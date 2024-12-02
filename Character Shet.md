@@ -41,6 +41,11 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
+        Inventory.Instance.OnInventoryUpdated += UpdateFromInventory;
+        
+        //초기 동기화
+        UpdateFromInventory();
+
         currentHP = maxHP; //초기 체력 설정
         
         //스킬 슬롯 초기화
@@ -50,6 +55,13 @@ public class Player : MonoBehaviour
         }
     }
     
+    public void UpdateFromInventory()
+    {
+        equippedWeapon = Inventory.Instance.equippedWeapon;
+        skillSlots = Inventory.Instance.skillSlots;
+        Debug.Log("Player 데이터가 Inventory에서 자동으로 동기화됐습니다");
+    }
+
     public void TakeDamge(int damge)
     {
         currentHP -= damge;
@@ -94,6 +106,7 @@ public class Player : MonoBehaviour
         return Inventory.Instance.GetBattleSkills();
     }
 }
+
 ~~~
 
 Enemy Sprite
