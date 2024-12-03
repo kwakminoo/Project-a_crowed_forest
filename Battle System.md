@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Yarn.Unity;
+using System;
 
 public class BattleManager : MonoBehaviour
 {
@@ -15,72 +16,123 @@ public class BattleManager : MonoBehaviour
     public TextMeshProUGUI enemyNameText;
     public Image backGroundImage;
 
-    [Header("Player Settings")]
+    [Header("Player/Enemy Settings")]
+    public Player player;
     public GameObject playerObject;
+    public EnemyScript currentEnemy;
     public GameObject enemyObject;
     public List<Button> skillButtons;
     private Inventory inventory;
+    public TextMeshProUGUI playerHPText;
+    public TextMeshProUGUI enemyHPText;
 
     private void Start()
     {
-        inventory = Inventory.Instance;
+        inventory = Inventory.Instance ?? throw new NullReferenceException("Inventory.Instance가 null입니다.");
+        player = playerObject.GetComponent<Player>() ?? Player.Instance;
+        currentEnemy = enemyObject.GetComponent<EnemyScript>();
+
+        if(player == null)
+        {
+            Debug.LogError("player 오브젝트를 찾을 수 없습니다");
+        }
+
+        if(currentEnemy == null)
+        {
+            Debug.LogError("enemyObject를 찾을 수 없습니다");
+        }
+
         Debug.Log("Inventory 인스턴스 상태: " + (inventory != null ? "정상" : "null"));
         InitialzeSkillButtons();
+        UpdateBattleState();
+
+        //플레이어 죽는 이벤트 연결
+        player.OnPlayerDeath += HandlePlayerDeath; 
     }
 
     private void InitialzeSkillButtons()
     {
-        List<Skill> battleSkills = inventory.GetBattleSkills();
-        foreach(var skill in inventory.GetBattleSkills())
+        if(player == null)
         {
-            Debug.Log(skill != null ? skill.skillName : "null");
+            Debug.LogError("Player 인스턴스가 null입니다");
+            return;
         }
 
-        Debug.Log("배틀 스킬 리스트 개수: " + battleSkills.Count);
+        List<Skill> battleSkills = player.GetBattleSkills() ?? new List<Skill>();
+
         for(int i = 0; i < skillButtons.Count; i++)
         {
-            Debug.Log($"배틀 스킬 {i}: {battleSkills[i].skillName ?? "null"}");
-
             if(i < battleSkills.Count && battleSkills[i] != null)
             {
-                Image buttonImage = skillButtons[i].transform.Find("Image").GetComponent<Image>();
-                buttonImage.sprite = battleSkills[i].skillIcon;
-                buttonImage.enabled = true;
-                Debug.Log($"스킬 버튼 {i}에 {battleSkills[i].skillName} 아이콘 장착");
+                skillButtons[i].GetComponentInChildren<Image>().sprite = battleSkills[i].skillIcon;
+                int skillIndex = i;
+                skillButtons[i].onClick.RemoveAllListeners();
+                skillButtons[i].onClick.AddListener(() => UseSkill(skillIndex));
             }
             else
             {
-                Debug.Log($"스킬 버튼 {i}에 아이콘 장착 실패");
-                Image buttonImage = skillButtons[i].transform.Find("Image").GetComponent<Image>();
-                buttonImage.sprite = null;
-                buttonImage.enabled = false;
+                skillButtons[i].GetComponentInChildren<Image>().sprite = null;
+                skillButtons[i].onClick.RemoveAllListeners();
             }
-        }
+        } 
     }
 
     public void UseSkill(int skillIndex)
     {
-        Skill skill = inventory.GetBattleSkills()[skillIndex];
-        if(skill != null)
+        List<Skill> battleSkills = player.GetBattleSkills();
+        if(skillIndex < 0 || skillIndex >= battleSkills.Count || battleSkills[skillIndex] == null)
         {
-            skill.ExecuteSkill(playerObject, enemyObject);
+            Debug.LogError("유효하지 않은 스킬 슬롯");
+            return;
+        }
+
+        Skill skill = battleSkills[skillIndex];
+        skill.ExecuteSkill(player.gameObject, currentEnemy.gameObject);
+        UpdateBattleState();
+
+        if(currentEnemy.currentHP <= 0)
+        {
+            currentEnemy.Die(); //적 죽음 처리
+            EndBattle();
         }
     }
 
-    public void StartBattle(string enemyName, string enemySpriteName, string backGroundName)
+    private void UpdateBattleState()
     {
-        battleWindow.SetActive(true);
-
-        enemyNameText.text = enemyName;
-
-        Sprite enemySprite = Resources.Load<Sprite>($"Character/{enemySpriteName}");
-        if(enemySprite != null)
+        if(player == null)
         {
-            enemyImage.sprite = enemySprite;
+            Debug.LogError("플레이어 인스턴스가 null입니다");
+        }
+        if(currentEnemy == null)
+        {
+            Debug.LogError("currentEnemy가 null입니다");
+        }
+        if(playerHPText != null)
+        {
+            playerHPText.text = $"{player.currentHP}/{player.maxHP}";
         }
         else
         {
-            Debug.LogError($"{enemySpriteName}을 찾을 수 없습니다");
+            Debug.LogError("playerHPText가 설정되지 않았습니다");
+        }
+        if(enemyHPText != null)
+        {
+            enemyHPText.text = $"{currentEnemy.currentHP}/{currentEnemy.maxHP}";
+        }
+        else
+        {
+            Debug.LogError("enemyHPText가 설정되지 않았습니다");
+        }
+    }
+
+    public void StartBattle(EnemyScript enemy, string backGroundName)
+    {
+        currentEnemy = enemy;
+        EnemyData data = currentEnemy.enemyData;
+        if(data != null)
+        {
+            enemyNameText.text = data.enemyName; //적 이름 설정
+            enemyImage.sprite = data.enemySprite; //적 이미지 설정
         }
 
         Sprite backGroundSprite = Resources.Load<Sprite>($"Battle Background/{backGroundName}");
@@ -93,7 +145,23 @@ public class BattleManager : MonoBehaviour
             Debug.LogError($"{backGroundName}을 찾을 수 없습니다");
         }
 
+        battleWindow.SetActive(true);
+        UpdateBattleState();
         InitialzeSkillButtons();
+    }
+
+    private void HandlePlayerDeath()
+    {
+        PlayPlayerDeathAnimation();
+    }
+    
+    private void PlayPlayerDeathAnimation()
+    {
+        Animator playerAnimator = player.GetComponent<Animator>();
+        if(playerAnimator != null)
+        {
+            playerAnimator.Play("PlayerDeath");
+        }
     }
 
     public void EndBattle()
@@ -101,6 +169,7 @@ public class BattleManager : MonoBehaviour
         battleWindow.SetActive(false);
     }
 }
+
 ~~~
 
 QTR 턴제 전투
