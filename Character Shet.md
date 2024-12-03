@@ -15,6 +15,7 @@ public class Player : MonoBehaviour
     [Header("Character Info")]
     public string characterName = "레이븐 드레이크"; //플레이어 이름
     public Sprite characterSprite; //플레이어 캐릭터 이미지
+    public Image characterImage; //Raven 오브젝트의 이미지 컴포넌트
     public int maxHP = 100; //최대 체력
     public int currentHP; //현재 체력
     public int level = 1; //플레이어 레벨
@@ -37,12 +38,23 @@ public class Player : MonoBehaviour
         {
             Destroy(gameObject);
         }
+        if(Inventory.Instance != null)
+        {
+            Inventory.Instance.OnInventoryUpdated += UpdateFromInventory;
+            Debug.Log("Player가 Inventory 이벤트를 구독했습니다");
+        }
+        else
+        {
+            Debug.LogError("Inventory.Instance가 null입니다");
+        }
     }
 
     private void Start()
-    {
-        Inventory.Instance.OnInventoryUpdated += UpdateFromInventory;
+    {   
+        Debug.Log($"Character Image 상태: {(characterImage != null ? "정상" : "null")}");
+        Debug.Log($"Character Sprite 상태: {(characterSprite != null ? characterSprite.name : "null")}");
         
+        UpdateCharacterImage();
         //초기 동기화
         UpdateFromInventory();
 
@@ -52,6 +64,15 @@ public class Player : MonoBehaviour
         for(int i = 0; i < 4; i++)
         {
             skillSlots.Add(null);
+        }
+    }
+
+    public void UpdateCharacterImage()
+    {
+        if(characterImage != null & characterSprite != null)
+        {
+            characterImage.sprite = characterSprite;
+            Debug.Log($"레이븐의 이미지가 {characterSprite.name}으로 업데이트 됐습니다");
         }
     }
     
