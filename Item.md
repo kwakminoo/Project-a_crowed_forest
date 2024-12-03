@@ -4,14 +4,16 @@ Inventory.cs
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public class Inventory : MonoBehaviour
 {
-    public static Inventory Instance { get; private set; }
+    public static Inventory Instance { get; private set; } //싱글톤 페턴
     public List<Skill> equippedSkills = new List<Skill>(); //장착된 스킬 목록
     public Item equippedWeapon; //장착된 무기
     public List<Skill> skillSlots = new List<Skill>(); //전투에 사용할 스킬 슬롯
     public List<Item> equippedWeapons = new List<Item>(); //플레이어가 얻은 무기 목록
+    public event Action OnInventoryUpdated; //인벤토리 데이터 변경시 호출
 
     private void Start()
     {
@@ -31,9 +33,16 @@ public class Inventory : MonoBehaviour
         }
     }
 
+    public void RaiseInventoryUpdatedEnent()
+    {
+        OnInventoryUpdated?.Invoke();
+    }
+    
+    
     public void EquipWeapon(Item weapon) //선택한 무기를 장착
     {
         equippedWeapon = weapon;
+        RaiseInventoryUpdatedEnent();
         equippedSkills.Clear();
         equippedSkills.AddRange(weapon.assignedSkills);
         Debug.Log(weapon.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
@@ -87,12 +96,15 @@ public class Inventory : MonoBehaviour
         if(slotIndex >= 0 && slotIndex < skillSlots.Count)
         {
             skillSlots[slotIndex] = skill;
+            OnInventoryUpdated?.Invoke(); //데이터 변경 이벤트 발생
             Debug.Log((skill != null ? skill.skillName : "스킬 없슴") + "이(가) 슬롯" + slotIndex + "할당됐습니다");
 
             for(int i = 0; i < skillSlots.Count; i ++)
             {
                 Debug.Log("슬롯" + i + (skillSlots[i] != null ? skillSlots[i].skillName : "비어있습니다"));
             }
+
+            RaiseInventoryUpdatedEnent();
         }
         else
         {
@@ -105,7 +117,6 @@ public class Inventory : MonoBehaviour
         return skillSlots;
     }
 }
-
 ~~~
 
 
