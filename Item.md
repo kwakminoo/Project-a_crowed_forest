@@ -172,17 +172,11 @@ public class InventoryManager : MonoBehaviour
         inventory = Inventory.Instance;
         player = Player.Instance;
 
-        /*Debug.Log("skillSlots 상태:");
-        for(int i =0; i < skillSlots.Count; i++)
+        if(player == null)
         {
-            Debug.Log("skillSlots["+i+"]: " + (skillSlots[i] != null ? skillSlots[i].name : "null"));
+            Debug.LogError("Player.Instance가 초기화되지 않았습니다.");
+            return;
         }
-
-        Debug.Log("skillSlotIcon 상태:");
-        for(int i =0; i < skillSlotIcon.Count; i++)
-        {
-            Debug.Log("skillSlotIcon["+i+"]: " + (skillSlotIcon[i] != null ? skillSlotIcon[i].name : "null"));
-        }*/
 
         //스킬 슬롯 클릭 시 무기에 할당된 스킬 목록 열기
         foreach(Button skillSlot in skillSlots)
@@ -206,19 +200,17 @@ public class InventoryManager : MonoBehaviour
     {
         if(selectedWeapon != null && !inventory.IsEquipped(selectedWeapon))
         {
-            inventory.IsEquipped(selectedWeapon);
-            inventory.EquipWeapon(selectedWeapon);
-            Debug.Log(selectedWeapon.itemName + "장착됨");
-
             Player.Instance.equippedWeapon = selectedWeapon;
+            inventory.EquipWeapon(selectedWeapon);
 
             if(weaponSlotIcon != null)
             {
                 weaponSlotIcon.sprite = selectedWeapon.itemIcon;
                 weaponSlotIcon.enabled = true;
             }
-            
+
             inventory.RaiseInventoryUpdatedEnent();
+            Debug.Log(selectedWeapon.itemName + "장착됨");
         }
         
         UpdateSkillSlot(selectedWeapon.assignedSkills);
@@ -389,6 +381,7 @@ public class InventoryManager : MonoBehaviour
         } 
     }
 }
+
 ~~~
 
 ![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
