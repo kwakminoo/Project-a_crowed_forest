@@ -62,16 +62,20 @@ public class BattleManager : MonoBehaviour
 
         for(int i = 0; i < skillButtons.Count; i++)
         {
+            Transform imageTransform = skillButtons[i].transform.Find("Image");
+            Image skillIconImage = imageTransform.GetComponent<Image>();
             if(i < battleSkills.Count && battleSkills[i] != null)
             {
-                skillButtons[i].GetComponentInChildren<Image>().sprite = battleSkills[i].skillIcon;
+                skillIconImage.sprite = battleSkills[i].skillIcon;
+                skillIconImage.enabled = true; //이미지 활성화
                 int skillIndex = i;
                 skillButtons[i].onClick.RemoveAllListeners();
                 skillButtons[i].onClick.AddListener(() => UseSkill(skillIndex));
             }
             else
             {
-                skillButtons[i].GetComponentInChildren<Image>().sprite = null;
+                skillIconImage.sprite = null;
+                skillIconImage.enabled = false; //이미지 비활성화 
                 skillButtons[i].onClick.RemoveAllListeners();
             }
         } 
