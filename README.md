@@ -17,3 +17,100 @@
 
 2.5D게임에서의 게임오브젝트 요소에 대해 알아보기
 간단한 턴제전투 완성하기
+
+Hierarchy
+-
+Main Camara
+    Dialogue
+├── Canvas
+│   ├── CustomLineView(Custem Line View 스크립트)
+│   │   ├── Scrollbar
+│   │   │   ├── Viewport
+│   │   │   │   ├── Content
+│   │   │   │   │   ├── StoryText(Prefab)
+│   │   │   │   │   └── Button(Prefab)
+│   │   │   │   │       └── Text
+│   │   │   └── SlidingArea
+│   │   │       └── Handle
+│   │   ├── BattleView(Battle Manager 스크립트)
+│   │   │   ├── BattleWindow
+│   │   │   │   ├── Background
+│   │   │   │   ├── EnemyObject(Enemy Scrpit 스크립트)
+│   │   │   │   │   ├── Enemy (Image)
+│   │   │   │   │   ├── EnemyHP
+│   │   │   │   │   │   ├── EnemyHPBar
+│   │   │   │   │   │   └── EnemyHPText
+│   │   │   │   │   ├── EnemyName (Image)
+│   │   │   │   │   │   └── Text
+│   │   │   │   ├── PlayerObject(Player 스크립트)
+│   │   │   │   │   ├── Raven (Image)
+│   │   │   │   │   ├── PlayerHP
+│   │   │   │   │   │   ├── HPBar
+│   │   │   │   │   │   └── HPText
+│   │   │   │   │   ├── PlayerSanity
+│   │   │   │   │   │   ├── SanityBar
+│   │   │   │   │   │   └── SanityText
+│   │   │   │   │   └── SkillButtons
+│   │   │   │   │       ├── SkillButton1
+│   │   │   │   │       │   └── Image
+│   │   │   │   │       ├── SkillButton2
+│   │   │   │   │       │   └── Image
+│   │   │   │   │       ├── SkillButton3
+│   │   │   │   │       │   └── Image
+│   │   │   │   │       └── SkillButton4
+│   │   │   │   │           └── Image
+│   │   ├── UIView
+│   │   │   ├── HPBar
+│   │   │   ├── HPFrameBar
+│   │   │   ├── SanityBar
+│   │   │   ├── SanityFrameBar
+│   │   │   ├── StoryTopBar
+│   │   │   ├── StoryBar
+│   │   │   ├── Background
+│   │   │   ├── InventoryView(Inventory, Inventory Manager, Player 스크립트)
+│   │   │   │   ├── InventoryWindow
+│   │   │   │   │   ├── RavenDrake (PlayerCharacter Image)
+│   │   │   │   │   ├── XButton
+│   │   │   │   │   ├── SkillSlot
+│   │   │   │   │   │   ├── SkillButton1
+│   │   │   │   │   │   │   └── Image
+│   │   │   │   │   │   ├── SkillButton2
+│   │   │   │   │   │   │   └── Image
+│   │   │   │   │   │   ├── SkillButton3
+│   │   │   │   │   │   │   └── Image
+│   │   │   │   │   │   └── SkillButton4
+│   │   │   │   │   │       └── Image
+│   │   │   │   │   ├── WeaponSlot
+│   │   │   │   │   │   └── Image
+│   │   │   │   │   ├── TopSlot
+│   │   │   │   │   │   └── Image
+│   │   │   │   │   ├── BottomSlot
+│   │   │   │   │   │   └── Image
+│   │   │   │   │   ├── WeaponItemWindow
+│   │   │   │   │   │   ├── XButton
+│   │   │   │   │   │   ├── ScrollView
+│   │   │   │   │   │   │   ├── Content
+│   │   │   │   │   │   │   │   └── WeaponSlotPrefab
+│   │   │   │   │   │   │   └── ScrollbarVertical
+│   │   │   │   │   │   └── WeaponOptionWindow
+│   │   │   │   │   │       ├── XButton
+│   │   │   │   │   │       ├── WeaponIcon
+│   │   │   │   │   │       ├── WeaponName
+│   │   │   │   │   │       │   └── Text
+│   │   │   │   │   │       ├── WeaponOption
+│   │   │   │   │   │       │   └── Text
+│   │   │   │   │   │       ├── EquipButton
+│   │   │   │   │   │       │   └── Text
+│   │   │   │   │   │       └── UnequipButton
+│   │   │   │   │   │           └── Text
+│   │   │   │   │   └── SkillWindow
+│   │   │   │   │       ├── XButton
+│   │   │   │   │       ├── SkillIcon
+│   │   │   │   │       ├── SkillName
+│   │   │   │   │       │   └── Text
+│   │   │   │   │       ├── SkillOption
+│   │   │   │   │       │   └── Text
+│   │   │   │   │       ├── EquipButton
+│   │   │   │   │       │   └── Text
+│   │   │   │   │       └── UnequipButton
+│   │   │   │   │           └── Text
