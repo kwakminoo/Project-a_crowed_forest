@@ -20,6 +20,7 @@
 
 Hierarchy
 -
+~~~C#
 Main Camara
     Dialogue
 ├── Canvas
@@ -114,3 +115,4 @@ Main Camara
 │   │   │   │   │       │   └── Text
 │   │   │   │   │       └── UnequipButton
 │   │   │   │   │           └── Text
+~~~
