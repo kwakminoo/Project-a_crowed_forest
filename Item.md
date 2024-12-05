@@ -11,6 +11,8 @@ public class Inventory : MonoBehaviour
     public static Inventory Instance { get; private set; } //싱글톤 페턴
     public List<Skill> equippedSkills = new List<Skill>(); //장착된 스킬 목록
     public Item equippedWeapon; //장착된 무기
+    public Item equippedTop; //장착된 상의
+    public Item equippedBottom; //장착된 하의
     public List<Skill> skillSlots = new List<Skill>(); //전투에 사용할 스킬 슬롯
     public List<Item> equippedWeapons = new List<Item>(); //플레이어가 얻은 무기 목록
     public event Action OnInventoryUpdated; //인벤토리 데이터 변경시 호출
@@ -48,6 +50,23 @@ public class Inventory : MonoBehaviour
         Debug.Log(weapon.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
     }
 
+    public void EquipTop(Item top) //선택한 무기를 장착
+    {
+        equippedTop = top;
+        RaiseInventoryUpdatedEnent();
+        equippedSkills.Clear();
+        equippedSkills.AddRange(top.assignedSkills);
+        Debug.Log(top.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
+    }
+
+    public void EquipBottom(Item bottom) //선택한 무기를 장착
+    {
+        equippedBottom = bottom;
+        RaiseInventoryUpdatedEnent();
+        equippedSkills.Clear();
+        equippedSkills.AddRange(bottom.assignedSkills);
+        Debug.Log(bottom.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
+    }
     public void UnequipWeapon(Item weapon) //선택한 무기를 해제
     {
         if(equippedWeapon == weapon)
@@ -151,9 +170,11 @@ public class InventoryManager : MonoBehaviour
 
     [Header("Top Slot")]
     public Button topSlot; //상의 장착 칸
+    public Item selectedTop; //선택한 상의
 
     [Header("Bottom Slot")]
     public Button bottomSlot; //하의 장착 칸
+    public Item selectedBottom; //선택한 하의
 
     [Header("Skill Slots")]
     private Skill selectedSkill; //선택한 스킬
@@ -172,16 +193,28 @@ public class InventoryManager : MonoBehaviour
 
     private Inventory inventory; //Inventory 스크립트 참조
     private Player player;
+
+    public Image inventoryCharacterImage; //인벤토리의 캐릭터 이미지
+    public Image battleCharacterImage; //배틀 윈도우의 캐릭터 이미지
     public void OpenInventory()
     {
         inventoryWindow.SetActive(true);
         PopulateWeaponItems();
     }
 
+    private void Log(string message)
+    {
+        #if UNITY_EDITOR
+        Debug.Log(message);
+        #endif
+    }
+    
     public void Start()
     {
         inventory = Inventory.Instance;
+        UpdateInventoryCharacterImages();
         player = Player.Instance;
+        Player.Instance.OnCharacterUpdated += UpdateInventoryCharacterImages;
 
         if(player == null)
         {
@@ -221,6 +254,7 @@ public class InventoryManager : MonoBehaviour
             }
 
             inventory.RaiseInventoryUpdatedEnent();
+            UpdatePreviewCharacterImages();
             Debug.Log(selectedWeapon.itemName + "장착됨");
         }
         
@@ -230,6 +264,68 @@ public class InventoryManager : MonoBehaviour
         weaponItemWindow.SetActive(false);
     }
 
+    public void EquipTop(Item top)
+    {
+        Player.Instance.equippedTop = top;
+        inventory.EquipTop(top);
+        UpdatePreviewCharacterImages();
+    }
+
+    public void EquipBottom(Item bottom)
+    {
+        Player.Instance.equippedTop = bottom;
+        inventory.EquipBottom(bottom);
+        UpdatePreviewCharacterImages();
+    }
+
+    public void ApplyChangesToPlayer()
+    {
+        Player.Instance.UpdateCharacterState(selectedWeapon, selectedTop, selectedBottom);
+    }
+
+    public void UpdatePreviewCharacterImages()
+    {
+        Sprite updateSprite = GenerateCompositeSprite(
+            Player.Instance.baseCharacterSprite,
+            selectedWeapon?.itemSprite,
+            selectedTop?.itemSprite,
+            selectedBottom?.itemSprite
+        );
+
+        inventoryCharacterImage.sprite = updateSprite;
+    }
+
+    public void UpdateInventoryCharacterImages()
+    {
+        inventoryCharacterImage.sprite = Player.Instance.GetCompositeCharacterImage();
+        if(battleCharacterImage != null)
+        {
+            battleCharacterImage.sprite = Player.Instance.GetCompositeCharacterImage();
+        }
+    }
+
+    private Sprite GenerateCompositeSprite(Sprite baseSprite, Sprite weaponSprite, Sprite topSprite, Sprite bottomSprite)
+    {
+        /*
+        Item equippedWeapon = Player.Instance.equippedWeapon;
+        Item equippedTop = Player.Instance.equippedTop;
+        Item equippedBottom = Player.Instance.equippedBottom;
+
+        if(equippedWeapon != null)
+        {
+            baseSprite = equippedWeapon.itemSprite;
+        }
+        if(equippedTop != null)
+        {
+            baseSprite = equippedTop.itemSprite;
+        }
+        if(equippedWeapon != null)
+        {
+            baseSprite = equippedBottom.itemSprite;
+        }*/
+
+        return baseSprite;
+    }
     public void UnequipWeapon()
     {
         if(selectedWeapon != null && !inventory.IsEquipped(selectedWeapon))
@@ -392,7 +488,6 @@ public class InventoryManager : MonoBehaviour
         } 
     }
 }
-
 ~~~
 
 ![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
