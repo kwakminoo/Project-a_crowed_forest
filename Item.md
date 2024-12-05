@@ -1,3 +1,27 @@
+Item.cs
+-
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public enum ItemType
+{
+    weapon, top, bottom, key
+}
+
+[CreateAssetMenu(fileName = "New Item", menuName = "Item System/Item")]
+public class Item : ScriptableObject
+{
+    public ItemType itemType;
+    public string itemName;
+    public Sprite itemIcon;
+    public string itemOption;
+    public Sprite itemSprite;
+    public List<Skill> assignedSkills = new List<Skill>();
+}
+~~~
+
 Inventory.cs
 -
 ~~~C#
