@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 using System;
 
 public class Player : MonoBehaviour
@@ -14,8 +14,9 @@ public class Player : MonoBehaviour
 
     [Header("Character Info")]
     public string characterName = "레이븐 드레이크"; //플레이어 이름
-    public Sprite characterSprite; //플레이어 캐릭터 이미지
-    public Image characterImage; //Raven 오브젝트의 이미지 컴포넌트
+    public Sprite baseCharacterSprite; //기본 캐릭터 이미지
+
+    [Header("Character Staytus")]
     public int maxHP = 100; //최대 체력
     public int currentHP; //현재 체력
     public int level = 1; //플레이어 레벨
@@ -25,8 +26,11 @@ public class Player : MonoBehaviour
 
     [Header("Weapon")]
     public Item equippedWeapon; //장착된 무기
+    public Item equippedTop; //상의
+    public Item equippedBottom; //하의
     public List<Skill> skillSlots = new List<Skill>(4);
 
+    public event System.Action OnCharacterUpdated;
     private void Awake()
     {
         if(Instance == null)
@@ -51,10 +55,7 @@ public class Player : MonoBehaviour
 
     private void Start()
     {   
-        Debug.Log($"Character Image 상태: {(characterImage != null ? "정상" : "null")}");
-        Debug.Log($"Character Sprite 상태: {(characterSprite != null ? characterSprite.name : "null")}");
-        
-        UpdateCharacterImage();
+        //UpdateCharacterImage();
         //초기 동기화
         UpdateFromInventory();
 
@@ -67,14 +68,47 @@ public class Player : MonoBehaviour
         }
     }
 
+    public Sprite GetCompositeCharacterImage()
+    {
+        Sprite compositeImage = baseCharacterSprite;
+        
+        if(equippedWeapon != null)
+        {
+            compositeImage = CombineSprites(compositeImage, equippedWeapon.itemSprite);
+        }
+        if(equippedTop != null)
+        {
+            compositeImage = CombineSprites(compositeImage, equippedTop.itemSprite);
+        }
+        if(equippedBottom != null)
+        {
+            compositeImage = CombineSprites(compositeImage, equippedBottom.itemSprite);
+        }
+
+        return compositeImage;
+    }
+
+    public void UpdateCharacterState(Item weapon, Item top, Item bottom)
+    {
+        equippedWeapon = weapon;
+        equippedTop = top;
+        equippedBottom = bottom;
+
+        OnCharacterUpdated?.Invoke();
+    }
+
+    private Sprite CombineSprites(Sprite baseSprite, Sprite overlaySprite)
+    {
+        return overlaySprite;
+    }
+
+    /*
     public void UpdateCharacterImage()
     {
-        if(characterImage != null & characterSprite != null)
-        {
-            characterImage.sprite = characterSprite;
-            Debug.Log($"레이븐의 이미지가 {characterSprite.name}으로 업데이트 됐습니다");
-        }
-    }
+        characterImage.sprite = characterSprite;
+        Debug.Log($"레이븐의 이미지가 {characterSprite.name}으로 업데이트 됐습니다");
+        
+    }*/
     
     public void UpdateFromInventory()
     {
@@ -127,7 +161,6 @@ public class Player : MonoBehaviour
         return Inventory.Instance.GetBattleSkills();
     }
 }
-
 ~~~
 
 Enemy Sprite
