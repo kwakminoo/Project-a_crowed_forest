@@ -18,6 +18,7 @@ public class BattleManager : MonoBehaviour
 
     [Header("Player/Enemy Settings")]
     public Player player;
+    public Image battleCharacterImage;
     public GameObject playerObject;
     public EnemyScript currentEnemy;
     public GameObject enemyObject;
@@ -30,6 +31,7 @@ public class BattleManager : MonoBehaviour
     {
         inventory = Inventory.Instance ?? throw new NullReferenceException("Inventory.Instance가 null입니다.");
         player = playerObject.GetComponent<Player>() ?? Player.Instance;
+        Player.Instance.OnCharacterUpdated += UpdateBattleCharacterImage;
         currentEnemy = enemyObject.GetComponent<EnemyScript>();
 
         if(player == null)
@@ -48,6 +50,14 @@ public class BattleManager : MonoBehaviour
 
         //플레이어 죽는 이벤트 연결
         player.OnPlayerDeath += HandlePlayerDeath; 
+    }
+
+    private void UpdateBattleCharacterImage()
+    {
+        if(battleCharacterImage != null)
+        {
+            battleCharacterImage.sprite = Player.Instance.GetCompositeCharacterImage();
+        }
     }
 
     private void InitialzeSkillButtons()
@@ -173,7 +183,6 @@ public class BattleManager : MonoBehaviour
         battleWindow.SetActive(false);
     }
 }
-
 ~~~
 
 QTR 턴제 전투
