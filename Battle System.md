@@ -19,6 +19,9 @@ public class BattleManager : MonoBehaviour
     [Header("Player/Enemy Settings")]
     public Player player;
     public Image battleCharacterImage;
+    public Image battleWeaponImage;
+    public Image battleTopImage;
+    public Image battleBottomImage;
     public GameObject playerObject;
     public EnemyScript currentEnemy;
     public GameObject enemyObject;
@@ -57,6 +60,37 @@ public class BattleManager : MonoBehaviour
         if(battleCharacterImage != null)
         {
             battleCharacterImage.sprite = Player.Instance.GetCompositeCharacterImage();
+
+            if(Player.Instance.equippedWeapon != null)
+            {
+                battleWeaponImage.sprite = Player.Instance.baseCharacterSprite;
+                battleWeaponImage.enabled = true;
+            }
+            else if(battleWeaponImage != null)
+            {
+                battleWeaponImage.sprite = null;
+                battleWeaponImage.enabled = false;
+            }
+            if(Player.Instance.equippedTop != null)
+            {
+                battleTopImage.sprite = Player.Instance.baseCharacterSprite;
+                battleTopImage.enabled = true;
+            }
+            else if(battleTopImage != null)
+            {
+                battleTopImage.sprite = null;
+                battleTopImage.enabled = false;
+            }
+            if(Player.Instance.equippedBottom != null)
+            {
+                battleBottomImage.sprite = Player.Instance.baseCharacterSprite;
+                battleBottomImage.enabled = true;
+            }
+            else if(battleBottomImage != null)
+            {
+                battleBottomImage.sprite = null;
+                battleBottomImage.enabled = false;
+            }
         }
     }
 
@@ -183,6 +217,7 @@ public class BattleManager : MonoBehaviour
         battleWindow.SetActive(false);
     }
 }
+
 ~~~
 
 QTR 턴제 전투
