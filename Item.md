@@ -180,6 +180,7 @@ public class InventoryManager : MonoBehaviour
 
     [Header("Weapon Slots")]
     private Item selectedWeapon; //선택한 무기
+    public Image inventoryWeaponImage; //무기 이미지
     public Button weaponSlot; //무기 잗착 칸
     public Image weaponSlotIcon; //무기장창칸에 들어갈 무기 아이콘
     public Transform weaponContent; //무기 아이템을 추가할 Content
@@ -195,10 +196,12 @@ public class InventoryManager : MonoBehaviour
     [Header("Top Slot")]
     public Button topSlot; //상의 장착 칸
     public Item selectedTop; //선택한 상의
+    public Image inventoryTopImage; //상의 이미지
 
     [Header("Bottom Slot")]
     public Button bottomSlot; //하의 장착 칸
     public Item selectedBottom; //선택한 하의
+    public Image inventoryBottomImage; //하의 이미지
 
     [Header("Skill Slots")]
     private Skill selectedSkill; //선택한 스킬
@@ -271,12 +274,18 @@ public class InventoryManager : MonoBehaviour
             Player.Instance.equippedWeapon = selectedWeapon;
             inventory.EquipWeapon(selectedWeapon);
 
+            if(inventoryWeaponImage != null)
+            {
+                inventoryWeaponImage.sprite = selectedWeapon.itemSprite;
+                inventoryWeaponImage.enabled = true;
+            }
             if(weaponSlotIcon != null)
             {
                 weaponSlotIcon.sprite = selectedWeapon.itemIcon;
                 weaponSlotIcon.enabled = true;
             }
 
+            inventoryWeaponImage.gameObject.SetActive(true);
             inventory.RaiseInventoryUpdatedEnent();
             UpdatePreviewCharacterImages();
             Debug.Log(selectedWeapon.itemName + "장착됨");
@@ -355,8 +364,11 @@ public class InventoryManager : MonoBehaviour
         if(selectedWeapon != null && !inventory.IsEquipped(selectedWeapon))
         {
             inventory.UnequipWeapon(selectedWeapon);
+            inventoryWeaponImage.sprite = null;
+            inventoryWeaponImage.enabled = false;
             weaponSlotIcon.sprite = null;
             weaponSlotIcon.enabled = false;
+            inventoryWeaponImage.gameObject.SetActive(false);
             CloseSkillSlot();
             Debug.Log(selectedWeapon.itemName + "해제됨");
         }
@@ -512,6 +524,7 @@ public class InventoryManager : MonoBehaviour
         } 
     }
 }
+
 ~~~
 
 ![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
