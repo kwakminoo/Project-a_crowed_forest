@@ -99,17 +99,37 @@ public class Player : MonoBehaviour
 
     private Sprite CombineSprites(Sprite baseSprite, Sprite overlaySprite)
     {
-        return overlaySprite;
+        if(overlaySprite == null) return overlaySprite;
+
+        Texture2D texture = new Texture2D(
+            Mathf.Max(baseSprite.texture.width, overlaySprite.texture.width),
+            Mathf.Max(baseSprite.texture.height, overlaySprite.texture.height)
+        );
+        
+        Color[] basePixels = baseSprite.texture.GetPixels();
+        Color[] overlayPixels = overlaySprite.texture.GetPixels();
+
+        texture.SetPixels(basePixels);
+
+        for(int i = 0; i < overlayPixels.Length; i++)
+        {
+            //투명도 기반으로 겹쳐서 표현
+            if(overlayPixels[i].a > 0)
+            {
+                texture.SetPixel(i % overlaySprite.texture.width, i / overlaySprite.texture.width, overlayPixels[i]);
+            }
+        }
+
+        texture.Apply();
+
+        //새로운 스프라이트 생성
+        return Sprite.Create(
+            texture,
+            baseSprite.rect,
+            new Vector2(0.5f, 0.5f)
+        );
     }
 
-    /*
-    public void UpdateCharacterImage()
-    {
-        characterImage.sprite = characterSprite;
-        Debug.Log($"레이븐의 이미지가 {characterSprite.name}으로 업데이트 됐습니다");
-        
-    }*/
-    
     public void UpdateFromInventory()
     {
         equippedWeapon = Inventory.Instance.equippedWeapon;
