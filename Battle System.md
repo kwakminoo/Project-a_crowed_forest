@@ -63,33 +63,39 @@ public class BattleManager : MonoBehaviour
 
             if(Player.Instance.equippedWeapon != null)
             {
-                battleWeaponImage.sprite = Player.Instance.baseCharacterSprite;
+                battleWeaponImage.sprite = Player.Instance.equippedWeapon.itemSprite;
                 battleWeaponImage.enabled = true;
+                battleWeaponImage.gameObject.SetActive(true);
             }
             else if(battleWeaponImage != null)
             {
                 battleWeaponImage.sprite = null;
                 battleWeaponImage.enabled = false;
+                battleWeaponImage.gameObject.SetActive(false);
             }
             if(Player.Instance.equippedTop != null)
             {
                 battleTopImage.sprite = Player.Instance.baseCharacterSprite;
                 battleTopImage.enabled = true;
+                battleTopImage.gameObject.SetActive(true);
             }
             else if(battleTopImage != null)
             {
                 battleTopImage.sprite = null;
                 battleTopImage.enabled = false;
+                battleTopImage.gameObject.SetActive(false);
             }
             if(Player.Instance.equippedBottom != null)
             {
                 battleBottomImage.sprite = Player.Instance.baseCharacterSprite;
                 battleBottomImage.enabled = true;
+                battleBottomImage.gameObject.SetActive(true);
             }
             else if(battleBottomImage != null)
             {
                 battleBottomImage.sprite = null;
                 battleBottomImage.enabled = false;
+                battleBottomImage.gameObject.SetActive(false);
             }
         }
     }
