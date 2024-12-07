@@ -70,22 +70,7 @@ public class Player : MonoBehaviour
 
     public Sprite GetCompositeCharacterImage()
     {
-        Sprite compositeImage = baseCharacterSprite;
-        
-        if(equippedWeapon != null)
-        {
-            compositeImage = CombineSprites(compositeImage, equippedWeapon.itemSprite);
-        }
-        if(equippedTop != null)
-        {
-            compositeImage = CombineSprites(compositeImage, equippedTop.itemSprite);
-        }
-        if(equippedBottom != null)
-        {
-            compositeImage = CombineSprites(compositeImage, equippedBottom.itemSprite);
-        }
-
-        return compositeImage;
+        return baseCharacterSprite;
     }
 
     public void UpdateCharacterState(Item weapon, Item top, Item bottom)
@@ -95,39 +80,6 @@ public class Player : MonoBehaviour
         equippedBottom = bottom;
 
         OnCharacterUpdated?.Invoke();
-    }
-
-    private Sprite CombineSprites(Sprite baseSprite, Sprite overlaySprite)
-    {
-        if(overlaySprite == null) return overlaySprite;
-
-        Texture2D texture = new Texture2D(
-            Mathf.Max(baseSprite.texture.width, overlaySprite.texture.width),
-            Mathf.Max(baseSprite.texture.height, overlaySprite.texture.height)
-        );
-        
-        Color[] basePixels = baseSprite.texture.GetPixels();
-        Color[] overlayPixels = overlaySprite.texture.GetPixels();
-
-        texture.SetPixels(basePixels);
-
-        for(int i = 0; i < overlayPixels.Length; i++)
-        {
-            //투명도 기반으로 겹쳐서 표현
-            if(overlayPixels[i].a > 0)
-            {
-                texture.SetPixel(i % overlaySprite.texture.width, i / overlaySprite.texture.width, overlayPixels[i]);
-            }
-        }
-
-        texture.Apply();
-
-        //새로운 스프라이트 생성
-        return Sprite.Create(
-            texture,
-            baseSprite.rect,
-            new Vector2(0.5f, 0.5f)
-        );
     }
 
     public void UpdateFromInventory()
