@@ -200,6 +200,7 @@ public class BattleManager : MonoBehaviour
         }
 
         battleWindow.SetActive(true);
+        UpdateBattleCharacterImage();
         UpdateBattleState();
         InitialzeSkillButtons();
     }
