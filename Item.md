@@ -527,4 +527,67 @@ public class InventoryManager : MonoBehaviour
 
 ~~~
 
+EquipmentWindow
+-
+~~~C#
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+
+public class EquipmentWindow : MonoBehaviour
+{
+    public Transform itemListContent; // 아이템 목록이 표시될 Content
+    public GameObject itemSlotPrefab; // 아이템 슬롯 Prefab
+    public Image currentItemIcon;    // 현재 장착 중인 아이템 아이콘
+    public TextMeshProUGUI currentItemName;
+    public TextMeshProUGUI currentItemOption;
+    public Button unequipButton;
+
+    public void Initialize(
+        Item currentItem,
+        List<Item> items,
+        System.Action<Item> onEquip,
+        System.Action onUnequip
+    )
+    {
+        // 현재 장착 중인 아이템 표시
+        if (currentItem != null)
+        {
+            currentItemIcon.sprite = currentItem.itemIcon;
+            currentItemName.text = currentItem.itemName;
+            currentItemOption.text = currentItem.itemOption;
+            unequipButton.onClick.AddListener(() => onUnequip?.Invoke());
+            unequipButton.gameObject.SetActive(true);
+        }
+        else
+        {
+            currentItemIcon.sprite = null;
+            currentItemName.text = "장착 없음";
+            currentItemOption.text = "아이템을 선택하세요.";
+            unequipButton.gameObject.SetActive(false);
+        }
+
+        // 아이템 목록 표시
+        foreach (Transform child in itemListContent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        foreach (Item item in items)
+        {
+            GameObject itemSlot = Instantiate(itemSlotPrefab, itemListContent);
+            Button itemButton = itemSlot.GetComponent<Button>();
+            Image itemIcon = itemSlot.GetComponentInChildren<Image>();
+            TextMeshProUGUI itemName = itemSlot.GetComponentInChildren<TextMeshProUGUI>();
+
+            itemIcon.sprite = item.itemIcon;
+            itemName.text = item.itemName;
+
+            itemButton.onClick.AddListener(() => onEquip?.Invoke(item));
+        }
+    }
+}
+~~~
+
 ![pxArt](https://github.com/user-attachments/assets/ec3dca95-1124-4f0a-bd67-741802c3529a)
