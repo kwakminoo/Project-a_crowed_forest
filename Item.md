@@ -11,7 +11,7 @@ public enum ItemType
 }
 
 [CreateAssetMenu(fileName = "New Item", menuName = "Item System/Item")]
-public class Item : ScriptableObject
+public class Item : ScriptableObject, IItemData
 {
     public ItemType itemType;
     public string itemName;
@@ -19,6 +19,10 @@ public class Item : ScriptableObject
     public string itemOption;
     public Sprite itemSprite;
     public List<Skill> assignedSkills = new List<Skill>();
+
+    public Sprite GetIcon() => itemIcon;
+    public string GetName() => itemName;
+    public string GetOption() => itemOption;
 }
 ~~~
 
@@ -33,6 +37,8 @@ using System;
 public class Inventory : MonoBehaviour
 {
     public static Inventory Instance { get; private set; } //싱글톤 페턴
+    private List<Item> items = new List<Item>();
+    private List<Skill> skills = new List<Skill>();
     public List<Skill> equippedSkills = new List<Skill>(); //장착된 스킬 목록
     public Item equippedWeapon; //장착된 무기
     public Item equippedTop; //장착된 상의
@@ -64,7 +70,16 @@ public class Inventory : MonoBehaviour
         OnInventoryUpdated?.Invoke();
     }
     
-    
+    public List<Item> GetItemsByType(ItemType type)
+    {
+        return items.FindAll(item => item.itemType == type);
+    }
+
+    public List<Skill> GetAvailableSkills()
+    {
+        return skills;
+    }
+
     public void EquipWeapon(Item weapon) //선택한 무기를 장착
     {
         equippedWeapon = weapon;
@@ -83,6 +98,11 @@ public class Inventory : MonoBehaviour
         Debug.Log(top.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
     }
 
+    public void UnequipTop()
+    {
+
+    }
+
     public void EquipBottom(Item bottom) //선택한 무기를 장착
     {
         equippedBottom = bottom;
@@ -90,6 +110,11 @@ public class Inventory : MonoBehaviour
         equippedSkills.Clear();
         equippedSkills.AddRange(bottom.assignedSkills);
         Debug.Log(bottom.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
+    }
+
+    public void UnequipBottom()
+    {
+        
     }
     public void UnequipWeapon(Item weapon) //선택한 무기를 해제
     {
@@ -178,51 +203,27 @@ public class InventoryManager : MonoBehaviour
     [Header("UI Elements")]
     public GameObject inventoryWindow;
 
-    [Header("Weapon Slots")]
-    private Item selectedWeapon; //선택한 무기
-    public Image inventoryWeaponImage; //무기 이미지
-    public Button weaponSlot; //무기 잗착 칸
-    public Image weaponSlotIcon; //무기장창칸에 들어갈 무기 아이콘
-    public Transform weaponContent; //무기 아이템을 추가할 Content
-    public GameObject weaponItemSlotPrefabs; //무기아이템 슬롯 프리펩
-    public GameObject weaponItemWindow; //무기 아이템 창
-    public GameObject weaponWindow; //무기 설명창
-    public TextMeshProUGUI weaponNameText; //무기 이름
-    public TextMeshProUGUI weaponOptionText;//무기 설명
-    public Image weaponIcon;//무기 아이콘 
-    public Button weaponEquipButton; //무기장착버튼
-    public Button weaponUnequipButton; //무기해제 버튼
+    [Header("Equipment Window Prefab")]
+    public GameObject equipmentWindowPrefab; // 장비창 프리펩
+    public Transform uiParent; // 장비 창의 부모 UI 오브젝트
 
-    [Header("Top Slot")]
-    public Button topSlot; //상의 장착 칸
-    public Item selectedTop; //선택한 상의
-    public Image inventoryTopImage; //상의 이미지
+    [Header("Slot Buttons")]
+    public Button weaponSlot; // 무기 장착 칸
+    public Button topSlot; // 상의 장착 칸
+    public Button bottomSlot; // 하의 장착 칸
+    public List<Button> skillSlots; // 스킬 슬롯 (4개)
 
-    [Header("Bottom Slot")]
-    public Button bottomSlot; //하의 장착 칸
-    public Item selectedBottom; //선택한 하의
-    public Image inventoryBottomImage; //하의 이미지
+    private Item selectedWeapon; // 선택된 무기
+    private Item selectedTop; // 선택된 상의
+    private Item selectedBottom; // 선택된 하의
+    private Skill selectedSkill; // 선택된 스킬
 
-    [Header("Skill Slots")]
-    private Skill selectedSkill; //선택한 스킬
-    private Button selectSkillSlot; //선택한 스킬 슬롯
-    public List<Button> skillSlots; //스킬 지정 칸(4개)
-    public List<Image> skillSlotIcon;//스킬슬롯에 들어갈 스킬 아이콘
-    public Transform skillContent; //스킬 아이템을 푸가할 Content
-    public GameObject skillSlotPrefabs; //스킬 슬롯 프리펩
-    public GameObject skillSelectWindow;//스킬들이 모여있는 창
-    public GameObject skillWindow;//스킬 설명창
-    public Image skillIconImage;//스킬 설명창에 들어갈 아이콘이미지
-    public TextMeshProUGUI skillNameText;//스킬 이름
-    public TextMeshProUGUI skillOptionText;//스킬 설명
-    public Button skillEquipButton; //스킬장착버튼
-    public Button skillUnequipButton; //스킬해제 버튼
+    private Inventory inventory; // Inventory 스크립트 참조
+    private Player player; // Player 스크립트 참조
 
-    private Inventory inventory; //Inventory 스크립트 참조
-    private Player player;
+    public Image inventoryCharacterImage; // 인벤토리의 캐릭터 이미지
+    public Image battleCharacterImage; // 배틀 창의 캐릭터 이미지
 
-    public Image inventoryCharacterImage; //인벤토리의 캐릭터 이미지
-    public Image battleCharacterImage; //배틀 윈도우의 캐릭터 이미지
     public void OpenInventory()
     {
         inventoryWindow.SetActive(true);
@@ -256,19 +257,40 @@ public class InventoryManager : MonoBehaviour
             skillSlot.onClick.AddListener(() => OpenSkillSelection(skillSlot));
         }
 
-        weaponEquipButton.onClick.RemoveAllListeners();
-        weaponEquipButton.onClick.AddListener(EquipWeapon);
-        weaponUnequipButton.onClick.RemoveAllListeners();
-        weaponUnequipButton.onClick.AddListener(UnequipWeapon);
-
-        skillEquipButton.onClick.RemoveAllListeners();
-        skillEquipButton.onClick.AddListener(() => EquipSkill());
-        skillUnequipButton.onClick.RemoveAllListeners();
-        skillUnequipButton.onClick.AddListener(() => UnquipSkill());
+        weaponSlot.onClick.AddListener(() => OpenEquipmentWindow(selectedWeapon ,inventory.GetItemsByType(ItemType.weapon), EquipWeapon, UnequipWeapon));
+        topSlot.onClick.AddListener(() => OpenEquipmentWindow(selectedTop, inventory.GetItemsByType(ItemType.top), EquipTop, UnequipTop));
+        bottomSlot.onClick.AddListener(() => OpenEquipmentWindow(selectedBottom, inventory.GetItemsByType(ItemType.bottom), EquipBottom, UnequipBottom));
     }
 
-    public void EquipWeapon()
+
+    private void OpenEquipmentWindow<T>(T currentItem, List<T> items, System.Action<T> onEquip, System.Action onUnequip)
     {
+        foreach(Transform child in uiParent)
+        {
+            Destroy(child.gameObject);
+        }
+
+        GameObject windowInstance = Instantiate(equipmentWindowPrefab, uiParent);
+
+        EquipmentWindow equipmentWindow = windowInstance.GetComponent<EquipmentWindow>();
+        if(equipmentWindow != null)
+        {
+            equipmentWindow.Initialize(
+                currentItem,
+                items,
+                onEquip,
+                onUnequip
+            );
+        }
+
+    }
+    public void EquipWeapon(Item weapon)
+    {
+        selectedWeapon = weapon;
+        inventory.EquipWeapon(weapon);
+        UpdateEquipmentImages();
+
+        /*
         if(selectedWeapon != null && !inventory.IsEquipped(selectedWeapon))
         {
             Player.Instance.equippedWeapon = selectedWeapon;
@@ -295,20 +317,41 @@ public class InventoryManager : MonoBehaviour
         CloseSkillSlot();
         weaponWindow.SetActive(false);
         weaponItemWindow.SetActive(false);
+        */
     }
 
     public void EquipTop(Item top)
     {
-        Player.Instance.equippedTop = top;
+        selectedWeapon = top;
         inventory.EquipTop(top);
-        UpdatePreviewCharacterImages();
+        UpdateEquipmentImages();
+    }
+
+    public void UnequipTop()
+    {
+
     }
 
     public void EquipBottom(Item bottom)
     {
-        Player.Instance.equippedTop = bottom;
+        selectedWeapon = bottom;
         inventory.EquipBottom(bottom);
-        UpdatePreviewCharacterImages();
+        UpdateEquipmentImages();
+    }
+
+    public void UnequipBottom()
+    {
+
+    }
+
+    private void UpdateEquipmentImages()
+    {
+        inventoryCharacterImage.sprite = player.GetCompositeCharacterImage();
+
+        if(battleCharacterImage != null)
+        {
+            battleCharacterImage.sprite = player.GetCompositeCharacterImage();
+        }
     }
 
     public void ApplyChangesToPlayer()
@@ -524,69 +567,78 @@ public class InventoryManager : MonoBehaviour
         } 
     }
 }
-
 ~~~
 
 EquipmentWindow
 -
 ~~~C#
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEditor.Search;
 
 public class EquipmentWindow : MonoBehaviour
 {
-    public Transform itemListContent; // 아이템 목록이 표시될 Content
-    public GameObject itemSlotPrefab; // 아이템 슬롯 Prefab
-    public Image currentItemIcon;    // 현재 장착 중인 아이템 아이콘
-    public TextMeshProUGUI currentItemName;
-    public TextMeshProUGUI currentItemOption;
+    public Transform itemListContent;
+    public GameObject itemSlotPrefab;
+    public Image currnetitemIcon;
+    public TextMeshProUGUI currnetItemName;
+    public TextMeshProUGUI currnetItemOption;
+    public Button equipButton;
     public Button unequipButton;
 
-    public void Initialize(
-        Item currentItem,
-        List<Item> items,
-        System.Action<Item> onEquip,
+    public void Initialize<T>(
+        T currentItem,
+        List<T> items,
+        System.Action<T> onEquip,
         System.Action onUnequip
     )
     {
-        // 현재 장착 중인 아이템 표시
-        if (currentItem != null)
+        if(currentItem != null)
         {
-            currentItemIcon.sprite = currentItem.itemIcon;
-            currentItemName.text = currentItem.itemName;
-            currentItemOption.text = currentItem.itemOption;
+            var itemData = currentItem as IItemData;
+            currnetitemIcon.sprite = itemData?.GetIcon();
+            currnetItemName.text = itemData?.GetName() ?? "창착 없음";
+            currnetItemOption.text = itemData?.GetOption() ?? "아이템을 선택하세요"; 
             unequipButton.onClick.AddListener(() => onUnequip?.Invoke());
-            unequipButton.gameObject.SetActive(true);
         }
         else
         {
-            currentItemIcon.sprite = null;
-            currentItemName.text = "장착 없음";
-            currentItemOption.text = "아이템을 선택하세요.";
-            unequipButton.gameObject.SetActive(false);
+            currnetitemIcon.sprite = null;
+            currnetItemName.text = "장착 없음";
+            currnetItemOption.text = "아이템을 선택하세요";
+            unequipButton.onClick.RemoveAllListeners();
         }
 
-        // 아이템 목록 표시
-        foreach (Transform child in itemListContent)
+        foreach(Transform child in itemListContent)
         {
             Destroy(child.gameObject);
         }
 
-        foreach (Item item in items)
+        foreach(T item in items)
         {
             GameObject itemSlot = Instantiate(itemSlotPrefab, itemListContent);
             Button itemButton = itemSlot.GetComponent<Button>();
             Image itemIcon = itemSlot.GetComponentInChildren<Image>();
             TextMeshProUGUI itemName = itemSlot.GetComponentInChildren<TextMeshProUGUI>();
 
-            itemIcon.sprite = item.itemIcon;
-            itemName.text = item.itemName;
+            var itemData = item as IItemData;
+            itemIcon.sprite = itemData?.GetIcon();
+            itemName.text = itemData?.GetName();
 
             itemButton.onClick.AddListener(() => onEquip?.Invoke(item));
         }
+        
     }
+}
+
+public interface IItemData
+{
+    Sprite GetIcon();
+    string GetName();
+    string GetOption();
 }
 ~~~
 
