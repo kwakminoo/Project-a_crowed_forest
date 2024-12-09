@@ -12,12 +12,13 @@ public enum SkillType
 }
 
 [CreateAssetMenu(fileName = "New Skill", menuName = "Skill System/Skill")]
-public class Skill : ScriptableObject
+public class Skill : ScriptableObject, IItemData
 {
     public string skillName;                //스킬 이름
+    public string skillOption;              //스킬 설명
     public SkillType skillType;             //스킬 타입
     public Sprite skillIcon;                //스킬 아이콘
-    public AnimationClip skillAnimation;    //스킬 에니메이션
+    public Sprite skillAnimation;    //스킬 에니메이션
     public readonly float slowMotionDuration = 5.0f; //슬로우모션 지속 시간 
     public GameObject skillEffect;          //스킬 이펙트
     public bool grantsTurnOnSuccess;        //스킬 성공시 턴을 가져오는지 여부
@@ -28,37 +29,39 @@ public class Skill : ScriptableObject
     public float successRate;               //성공 확률(회피나 패링 등)
     public float counterAttackDamage;       //카운터 데미지
 
-    public bool ExecuteSkill(GameObject player, GameObject target)
+    public Sprite GetIcon() => skillIcon;
+    public string GetName() => skillName;
+    public string GetOption() => skillOption;
+
+    /*public Skill(string name, int dmg, SkillType type, float defMult = 1.0f, float , int counterDmg = 0)
     {
-        if(skillType == SkillType.Attack)
+        skillName = name;
+        damage = dmg;
+        skillType = type;
+        defenseMultiplier = defMult;
+        counterAttackDamage = counterDmg;
+    
+        skillIcon = Resources.Load<Sprite>($"Skills/Icons/{name}");
+        skillAnimation = Resources.Load<AnimationClip>($"Skills/Animations/{name}");
+        skillEffect = Resources.Load<GameObject>($"Skills/Effects/{name}");
+
+    }*/
+
+    public void ExecuteSkill(GameObject attacker, GameObject target)
+    {
+        Debug.Log($"{skillName}을 사용");
+
+        var enemyScript = target.GetComponent<EnemyScript>();
+        if(enemyScript != null)
         {
-            ApplyDamage(target);
-            return false;
+            enemyScript.TakeDamage(damage);
         }
-        else if(skillType == SkillType.Defense)
+
+        if(attacker.TryGetComponent<Animator>(out Animator animator))
         {
-            bool success = Random.value <= successRate;
-            if(success)
-            {
-                Debug.Log($"{skillName}성공, 턴을 가져옵니다");
-                return true;
-            }
-            else
-            {
-                Debug.Log($"{skillName}실패");
-                ApplyDamage(player);
-                return false;
-            }
+            animator.Play(skillAnimation.name);
         }
-        return false;
     }
 
-    private void ApplyDamage(GameObject target)
-    {
-        Debug.Log($"{skillName} 사용: {target.name}에게 {damage} 데미지, {santiDamage} 정신력 감소");
-    }
-
-    private Dictionary<string, Skill> allSkills = new Dictionary<string, Skill>();
 }
-
 ~~~
