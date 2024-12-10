@@ -211,6 +211,7 @@ public class InventoryManager : MonoBehaviour
     public Button weaponSlot; // 무기 장착 칸
     public Button topSlot; // 상의 장착 칸
     public Button bottomSlot; // 하의 장착 칸
+    public Button skillSlot;
     public List<Button> skillSlots; // 스킬 슬롯 (4개)
 
     private Item selectedWeapon; // 선택된 무기
@@ -227,7 +228,6 @@ public class InventoryManager : MonoBehaviour
     public void OpenInventory()
     {
         inventoryWindow.SetActive(true);
-        PopulateWeaponItems();
     }
 
     private void Log(string message)
@@ -254,7 +254,7 @@ public class InventoryManager : MonoBehaviour
         foreach(Button skillSlot in skillSlots)
         {
             skillSlot.onClick.RemoveAllListeners();
-            skillSlot.onClick.AddListener(() => OpenSkillSelection(skillSlot));
+            skillSlot.onClick.AddListener(() => OpenEquipmentWindow(selectedSkill, inventory.GetAvailableSkills(), EquipSkill, UnequipSkill));
         }
 
         weaponSlot.onClick.AddListener(() => OpenEquipmentWindow(selectedWeapon ,inventory.GetItemsByType(ItemType.weapon), EquipWeapon, UnequipWeapon));
@@ -284,64 +284,69 @@ public class InventoryManager : MonoBehaviour
         }
 
     }
+
+    public void EquipSkill(Skill skill)
+    {
+        int skillIndex = skillSlots.FindIndex(slot => slot == skillSlot);
+        if(skillIndex >= 0)
+        {
+            selectedSkill = skill;
+            inventory.AssignSkillToSlot(skill, skillIndex);
+            UpdateInventoryCharacterImages();
+        } 
+    }
+
+    public void UnequipSkill()
+    {
+        int skillIndex = skillSlots.FindIndex(slot => slot == skillSlot);
+        if(skillIndex >= 0)
+        {
+            inventory.AssignSkillToSlot(null, skillIndex);
+            selectedSkill = null;
+            UpdateInventoryCharacterImages();
+        }
+    }
+
     public void EquipWeapon(Item weapon)
     {
         selectedWeapon = weapon;
         inventory.EquipWeapon(weapon);
         UpdateEquipmentImages();
+    }
 
-        /*
-        if(selectedWeapon != null && !inventory.IsEquipped(selectedWeapon))
-        {
-            Player.Instance.equippedWeapon = selectedWeapon;
-            inventory.EquipWeapon(selectedWeapon);
-
-            if(inventoryWeaponImage != null)
-            {
-                inventoryWeaponImage.sprite = selectedWeapon.itemSprite;
-                inventoryWeaponImage.enabled = true;
-            }
-            if(weaponSlotIcon != null)
-            {
-                weaponSlotIcon.sprite = selectedWeapon.itemIcon;
-                weaponSlotIcon.enabled = true;
-            }
-
-            inventoryWeaponImage.gameObject.SetActive(true);
-            inventory.RaiseInventoryUpdatedEnent();
-            UpdatePreviewCharacterImages();
-            Debug.Log(selectedWeapon.itemName + "장착됨");
-        }
-        
-        UpdateSkillSlot(selectedWeapon.assignedSkills);
-        CloseSkillSlot();
-        weaponWindow.SetActive(false);
-        weaponItemWindow.SetActive(false);
-        */
+    public void UnequipWeapon()
+    {
+        selectedTop = null;
+        inventory.UnequipWeapon(selectedWeapon);
+        UpdateEquipmentImages();
     }
 
     public void EquipTop(Item top)
     {
-        selectedWeapon = top;
+        selectedTop = top;
         inventory.EquipTop(top);
         UpdateEquipmentImages();
     }
 
     public void UnequipTop()
     {
-
+        selectedTop = null;
+        inventory.EquipTop(selectedTop);
+        UpdateEquipmentImages();
     }
 
     public void EquipBottom(Item bottom)
     {
-        selectedWeapon = bottom;
+        selectedBottom = bottom;
         inventory.EquipBottom(bottom);
         UpdateEquipmentImages();
     }
 
     public void UnequipBottom()
     {
-
+        selectedBottom = null;
+        inventory.EquipBottom(selectedBottom);
+        UpdateEquipmentImages();
     }
 
     private void UpdateEquipmentImages()
@@ -352,6 +357,10 @@ public class InventoryManager : MonoBehaviour
         {
             battleCharacterImage.sprite = player.GetCompositeCharacterImage();
         }
+
+        weaponSlot.GetComponent<Image>().sprite = selectedWeapon?.itemIcon;
+        topSlot.GetComponent<Image>().sprite = selectedTop?.itemIcon;
+        bottomSlot.GetComponent<Image>().sprite = selectedBottom.itemIcon;
     }
 
     public void ApplyChangesToPlayer()
@@ -382,189 +391,7 @@ public class InventoryManager : MonoBehaviour
 
     private Sprite GenerateCompositeSprite(Sprite baseSprite, Sprite weaponSprite, Sprite topSprite, Sprite bottomSprite)
     {
-        /*
-        Item equippedWeapon = Player.Instance.equippedWeapon;
-        Item equippedTop = Player.Instance.equippedTop;
-        Item equippedBottom = Player.Instance.equippedBottom;
-
-        if(equippedWeapon != null)
-        {
-            baseSprite = equippedWeapon.itemSprite;
-        }
-        if(equippedTop != null)
-        {
-            baseSprite = equippedTop.itemSprite;
-        }
-        if(equippedWeapon != null)
-        {
-            baseSprite = equippedBottom.itemSprite;
-        }*/
-
         return baseSprite;
-    }
-    public void UnequipWeapon()
-    {
-        if(selectedWeapon != null && !inventory.IsEquipped(selectedWeapon))
-        {
-            inventory.UnequipWeapon(selectedWeapon);
-            inventoryWeaponImage.sprite = null;
-            inventoryWeaponImage.enabled = false;
-            weaponSlotIcon.sprite = null;
-            weaponSlotIcon.enabled = false;
-            inventoryWeaponImage.gameObject.SetActive(false);
-            CloseSkillSlot();
-            Debug.Log(selectedWeapon.itemName + "해제됨");
-        }
-    }
-
-    public void CloseSkillSlot()
-    {
-        foreach(Image skillIcon in skillSlotIcon)
-        {
-            if(skillIcon != null)
-            {
-                skillIcon.sprite = null;
-                skillIcon.enabled = false;
-            }
-        }
-
-        inventory.ClearSkillSlots();
-    }
-
-    public void UpdateSkillSlot(List<Skill> skills)
-    {
-        for(int i = 0; i < skillSlotIcon.Count; i++)
-        {
-            if(i <skills.Count && skillSlots[i] != null)
-            {
-                skillSlotIcon[i].sprite = skills[i].skillIcon;
-                skillSlotIcon[i].enabled = true;
-            }
-            else
-            {
-                skillSlotIcon[i].sprite = null;
-                skillSlotIcon[i].enabled = false;
-            }
-        }
-    }
-
-    public void OpenSkillSelection(Button skillSlot)
-    {
-        selectSkillSlot = skillSlot;
-        Debug.Log("선택한 스킬 슬롯: " + selectSkillSlot.name);
-        
-        List<Skill> availableSkills = inventory.GetEquippedWeaponSkills();
-        if(availableSkills.Count == 0)
-        {
-            Debug.LogError("무기에 할당된 스킳이 없습니다");
-            return;
-        }
-
-        foreach(Transform child in skillContent)
-        {
-            Destroy(child.gameObject);
-        }
-
-        foreach(Skill skill in availableSkills)
-        {
-            GameObject skillSlotObject = Instantiate(skillSlotPrefabs, skillContent);
-            skillSlotObject.GetComponentInChildren<Image>().sprite = skill.skillIcon;
-            Button skillButton = skillSlotObject.GetComponent<Button>();
-            skillButton.onClick.AddListener(() => SkillWindow(skill));
-
-        }
-    }
-
-    public void SkillWindow(Skill skill)
-    {
-        selectedSkill = skill;
-        skillWindow.SetActive(true);
-        skillNameText.text = skill.skillName;
-        skillOptionText.text = skill.skillOption;
-        skillIconImage.sprite = skill.skillIcon;
-    }
-
-    public void EquipSkill()
-    {
-        Debug.Log("Inevntory 참조 확인:" + (inventory != null ? "정상" : "null"));
-
-        if(selectSkillSlot == null || selectedSkill == null || inventory == null) return;
-
-        int skillIndex = skillSlots.IndexOf(selectSkillSlot);
-        int exitingIndex = inventory.skillSlots.IndexOf(selectedSkill);
-        if(exitingIndex >= 0 && exitingIndex < skillSlotIcon.Count && exitingIndex != skillIndex)
-        {
-            inventory.AssignSkillToSlot(null, exitingIndex);
-            skillSlotIcon[exitingIndex].sprite = null;
-            skillSlotIcon[exitingIndex].enabled = false;
-            Debug.Log("기존 슬롯" + exitingIndex + "에서 스킬이 해제됬습니다");
-        }
-        
-        Debug.Log("선택된 슬롯 인덱스: " + skillIndex);
-
-        if(skillIndex >= 0 && skillIndex < skillSlotIcon.Count)
-        {
-            inventory.AssignSkillToSlot(selectedSkill, skillIndex);
-
-            skillSlotIcon[skillIndex].sprite = selectedSkill.skillIcon;
-            skillSlotIcon[skillIndex].enabled = true;
-
-            Player.Instance.skillSlots = inventory.skillSlots;
-            Debug.Log(selectedSkill.skillName + "이(가)" + skillIndex + "슬롯에 장착됐습니다");
-        
-            inventory.RaiseInventoryUpdatedEnent();
-        } 
-        else
-        {
-            Debug.Log(selectedSkill.skillName + "이(가)" + skillIndex + "슬롯에 장착을 실패했습니다");
-        } 
-
-        skillWindow.SetActive(false);
-        skillSelectWindow.SetActive(false);      
-    }
-
-    public void UnquipSkill()
-    {
-        int skillIndex = skillSlots.IndexOf(selectSkillSlot);
-        if(skillIndex >= 0 && skillIndex < skillSlotIcon.Count)
-        {
-            inventory.AssignSkillToSlot(null, skillIndex);
-
-            skillSlotIcon[skillIndex].sprite = null;
-            skillSlotIcon[skillIndex].enabled = false;
-
-            Debug.Log(selectedSkill.skillName + "이(가)" + skillIndex + "슬롯에 해제됐습니다");
-        }
-
-        skillWindow.SetActive(false);
-    }
-
-    public void WeaponWindow(Item weapon)
-    {
-        selectedWeapon = weapon;
-        weaponWindow.SetActive(true);
-        weaponNameText.text = weapon.itemName;
-        weaponOptionText.text = weapon.itemOption;
-        weaponIcon.sprite = weapon.itemIcon;
-    }
-
-    public void PopulateWeaponItems()
-    {
-        foreach(Transform child in weaponContent)
-        {
-            Destroy(child.gameObject);
-        }
-
-        foreach(Item weapon in inventory.equippedWeapons)
-        {
-            GameObject slot = Instantiate(weaponItemSlotPrefabs, weaponContent);
-            slot.GetComponentInChildren<Image>().sprite = weapon.itemIcon;
-            Button button = slot.GetComponent<Button>();
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => WeaponWindow(weapon));
-
-
-        } 
     }
 }
 ~~~
