@@ -93,26 +93,16 @@ Main Camara
 │   │   │   │   │   │   │   ├── Content
 │   │   │   │   │   │   │   │   └── WeaponSlotPrefab
 │   │   │   │   │   │   │   └── ScrollbarVertical
-│   │   │   │   │   │   └── WeaponOptionWindow
-│   │   │   │   │   │       ├── XButton
-│   │   │   │   │   │       ├── WeaponIcon
-│   │   │   │   │   │       ├── WeaponName
-│   │   │   │   │   │       │   └── Text
-│   │   │   │   │   │       ├── WeaponOption
-│   │   │   │   │   │       │   └── Text
-│   │   │   │   │   │       ├── EquipButton
-│   │   │   │   │   │       │   └── Text
-│   │   │   │   │   │       └── UnequipButton
-│   │   │   │   │   │           └── Text
-│   │   │   │   │   └── SkillWindow
-│   │   │   │   │       ├── XButton
-│   │   │   │   │       ├── SkillIcon
-│   │   │   │   │       ├── SkillName
-│   │   │   │   │       │   └── Text
-│   │   │   │   │       ├── SkillOption
-│   │   │   │   │       │   └── Text
-│   │   │   │   │       ├── EquipButton
-│   │   │   │   │       │   └── Text
-│   │   │   │   │       └── UnequipButton
-│   │   │   │   │           └── Text
+│   │   │   │   │   │   └── EquipmentWindowPrefab (GameObject)
+│   │   │   │   │   │   │   ├── ScrollView (GameObject)
+│   │   │   │   │   │   │   │   ├── Viewport (Mask Component)
+│   │   │   │   │   │   │   │   │   └── Content (GameObject) ← 아이템/스킬 슬롯 프리팹이 동적으로 생성됨
+│   │   │   │   │   │   │   │   │   │   └── Slot(Prefabs)
+│   │   │   │   │   │   │   ├── OptionWindow (GameObject)
+│   │   │   │   │   │   │   │   ├── XButton (Button) ← 창 닫기 버튼
+│   │   │   │   │   │   │   │   ├── Icon (Image) ← 선택한 아이템/스킬의 아이콘
+│   │   │   │   │   │   │   │   ├── Name (TextMeshProUGUI) ← 선택한 아이템/스킬의 이름
+│   │   │   │   │   │   │   │   ├── Description (TextMeshProUGUI) ← 선택한 아이템/스킬의 설명
+│   │   │   │   │   │   │   │   ├── EquipButton (Button) ← 장착 버튼
+│   │   │   │   │   │   │   │   └── UnequipButton (Button) ← 해제 버튼
 ~~~
