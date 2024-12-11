@@ -14,6 +14,9 @@
 -----------
 플레이어/적 스크립트 완성, 배틀메니저에서 연동
 인벤토리창에서 아이템/스킬 창 프리펩화하여 최적화
+NullReferenceException: Object reference not set to an instance of an object
+InventoryManager.UpdateEquipmentImages () (at Assets/Resources/Inventory/Inventory Manager.cs:198)
+InventoryManager.Start () (at Assets/Resources/Inventory/Inventory Manager.cs:51)
 
 2.5D게임에서의 게임오브젝트 요소에 대해 알아보기
 간단한 턴제전투 완성하기
