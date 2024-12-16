@@ -166,6 +166,33 @@ public class EnemyScript : MonoBehaviour
         Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
     }
 
+    public void UseSkill(Player target)
+    {
+        if(enemyData == null || enemyData.skills == null || enemyData.skills.Count == 0)
+        {
+            Debug.LogError("적 스킬이 설정 되지 않았습니다");
+            return;
+        }
+
+        Skill selectedSkill = ChooseSkill();
+
+        if(selectedSkill == null)
+        {
+            Debug.LogError($"{enemyData.enemyName}이(가) 사용할 수 있는 스킬이 없습니다");
+            return;
+        }
+
+        Debug.Log($"{enemyData.enemyName}이(가) {selectedSkill.skillName}을 사용합니다");
+
+        selectedSkill.ExecuteSkill(this.gameObject, target.gameObject);
+    }
+
+    private Skill ChooseSkill()
+    {
+        int randomIndex = UnityEngine.Random.Range(0, enemyData.skills.Count);
+        return enemyData.skills[randomIndex];
+    }
+
     //체력 변경 메소드
     public void TakeDamage(int damage)
     {
@@ -198,6 +225,7 @@ public class EnemyScript : MonoBehaviour
         return enemyData.skills;
     }
 }
+
 ~~~
 
 enemy Data
