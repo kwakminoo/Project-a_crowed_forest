@@ -30,6 +30,9 @@ public class BattleManager : MonoBehaviour
     public TextMeshProUGUI playerHPText;
     public TextMeshProUGUI enemyHPText;
 
+    public Camera mainCamera;
+    private bool isBattleActive = true;
+
     private void Start()
     {
         inventory = Inventory.Instance ?? throw new NullReferenceException("Inventory.Instance가 null입니다.");
@@ -131,6 +134,70 @@ public class BattleManager : MonoBehaviour
         } 
     }
 
+    private IEnumerator BattleRoutine()
+    {
+        while(isBattleActive)
+        {
+            //적 턴
+            yield return StartCoroutine(EnemyTurn());
+
+            if(!isBattleActive) break;
+
+            yield return StartCoroutine(PlayerTurn());
+        }
+
+        EndBattle();
+    }
+
+    private IEnumerator EnemyTurn()
+    {
+        Debug.Log($"{currentEnemy.enemyData.enemyName}의 턴 시작");
+
+        yield return StartCoroutine(ShowActionWithCameraZoom(() =>
+        {
+            currentEnemy.UseSkill(player);
+        }));
+
+        UpdateBattleState();
+
+        if(player.currentHP <= 0)
+        {
+            isBattleActive = false;
+        }
+
+        yield return new WaitForSeconds(1f);
+    }
+
+    private IEnumerator PlayerTurn()
+    {
+        Debug.Log("player턴 시작");
+
+        bool isActionCompleted = false;
+
+        //스킬 버튼 활성호 및 클릭 대기
+        for(int i = 0; i < skillButtons.Count; i++)
+        {
+            int skillIndex = 1;
+            skillButtons[i].onClick.RemoveAllListeners();
+            skillButtons[i].onClick.AddListener(() =>
+            {
+                UseSkill(skillIndex);
+                isActionCompleted = true;
+            });
+        }
+
+        yield return new WaitUntil(() => isActionCompleted);
+
+        UpdateBattleState();
+
+        if(currentEnemy.currentHP <= 0)
+        {
+            isBattleActive = false;
+        }
+
+        yield return new WaitForSeconds(1f); //플레이어 턴이 끝난 후 짧은 대기 
+    }
+
     public void UseSkill(int skillIndex)
     {
         List<Skill> battleSkills = player.GetBattleSkills();
@@ -149,6 +216,22 @@ public class BattleManager : MonoBehaviour
             currentEnemy.Die(); //적 죽음 처리
             EndBattle();
         }
+    }
+
+    private IEnumerator ShowActionWithCameraZoom(System.Action action)
+    {
+        float originalSize = mainCamera.orthographicSize;
+        mainCamera.orthographicSize = originalSize / 2;
+        yield return new WaitForSeconds(0.5f);
+
+        //슬로우 모션 효과와 함께 액션 실행
+        Time.timeScale = 0.5f;
+        action?.Invoke();
+        yield return new WaitForSecondsRealtime(1.0f);
+        Time.timeScale = 1.0f;
+
+        //카메라 복원
+        mainCamera.orthographicSize = originalSize;
     }
 
     private void UpdateBattleState()
@@ -203,6 +286,7 @@ public class BattleManager : MonoBehaviour
         UpdateBattleCharacterImage();
         UpdateBattleState();
         InitialzeSkillButtons();
+        StartCoroutine(BattleRoutine());
     }
 
     private void HandlePlayerDeath()
@@ -221,10 +305,18 @@ public class BattleManager : MonoBehaviour
 
     public void EndBattle()
     {
+        Debug.Log("전투 종료");
+        if(player.currentHP <= 0)
+        {
+            Debug.Log("{currentEnemy.enemyData.enemyName} 승리");
+        }
+        else if(currentEnemy.currentHP <= 0)
+        {
+            Debug.Log($"player 승리");
+        }
         battleWindow.SetActive(false);
     }
 }
-
 ~~~
 
 QTR 턴제 전투
