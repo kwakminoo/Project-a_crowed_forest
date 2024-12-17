@@ -18,7 +18,7 @@ public class Skill : ScriptableObject, IItemData
     public string skillOption;              //스킬 설명
     public SkillType skillType;             //스킬 타입
     public Sprite skillIcon;                //스킬 아이콘
-    public Sprite skillAnimation;    //스킬 에니메이션
+    public Sprite skillSprite;              //스킬 에니메이션
     public readonly float slowMotionDuration = 5.0f; //슬로우모션 지속 시간 
     public GameObject skillEffect;          //스킬 이펙트
     public bool grantsTurnOnSuccess;        //스킬 성공시 턴을 가져오는지 여부
@@ -33,21 +33,7 @@ public class Skill : ScriptableObject, IItemData
     public string GetName() => skillName;
     public string GetOption() => skillOption;
 
-    /*public Skill(string name, int dmg, SkillType type, float defMult = 1.0f, float , int counterDmg = 0)
-    {
-        skillName = name;
-        damage = dmg;
-        skillType = type;
-        defenseMultiplier = defMult;
-        counterAttackDamage = counterDmg;
-    
-        skillIcon = Resources.Load<Sprite>($"Skills/Icons/{name}");
-        skillAnimation = Resources.Load<AnimationClip>($"Skills/Animations/{name}");
-        skillEffect = Resources.Load<GameObject>($"Skills/Effects/{name}");
-
-    }*/
-
-    public void ExecuteSkill(GameObject attacker, GameObject target)
+    public void ExecuteSkill(GameObject attacker, GameObject target, MonoBehaviour caller)
     {
         Debug.Log($"{skillName}을 사용");
 
@@ -55,13 +41,45 @@ public class Skill : ScriptableObject, IItemData
         if(enemyScript != null)
         {
             enemyScript.TakeDamage(damage);
+            Debug.Log($"{skillName}의 데미지: {damage}");
         }
 
-        if(attacker.TryGetComponent<Animator>(out Animator animator))
+        var player = target.GetComponent<Player>();
+        if(player != null)
         {
-            animator.Play(skillAnimation.name);
+            player.TakeDamage(damage);
+            Debug.Log($"{skillName}의 데미지: {damage}");
+        }
+
+        if(skillSprite != null && caller != null)
+        {
+            SpriteRenderer renderer = attacker.GetComponentInChildren<SpriteRenderer>();
+            if(renderer != null)
+            {
+                caller.StartCoroutine(ShowSpriteEffect(renderer, skillSprite));
+            }
+            else
+            {
+                Debug.LogError($"{attacker.name}에 SpriteRenderer가 없습니다");
+            }
         }
     }
 
+    public void ShowSkillEffect(GameObject attacker, Sprite skillSprite)
+    {
+        SpriteRenderer renderer = attacker.GetComponentInChildren<SpriteRenderer>();
+    }
+
+    public IEnumerator ShowSpriteEffect(SpriteRenderer renderer, Sprite skillSprite)
+    {
+        Sprite origianlSprite = renderer.sprite;
+
+        renderer.sprite = skillSprite;
+        yield return new WaitForSeconds(0.5f);
+        
+        renderer.sprite = origianlSprite;
+    }
+
 }
+
 ~~~
