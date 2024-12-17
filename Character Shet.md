@@ -30,6 +30,7 @@ public class Player : MonoBehaviour
     public Item equippedBottom; //하의
     public List<Skill> skillSlots = new List<Skill>(4);
 
+    public Inventory inventory;
     public event System.Action OnCharacterUpdated;
     private void Awake()
     {
@@ -42,6 +43,11 @@ public class Player : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void Start()
+    {   
+        inventory = Inventory.Instance;
         if(Inventory.Instance != null)
         {
             Inventory.Instance.OnInventoryUpdated += UpdateFromInventory;
@@ -51,11 +57,6 @@ public class Player : MonoBehaviour
         {
             Debug.LogError("Inventory.Instance가 null입니다");
         }
-    }
-
-    private void Start()
-    {   
-        //UpdateCharacterImage();
         //초기 동기화
         UpdateFromInventory();
 
@@ -82,6 +83,7 @@ public class Player : MonoBehaviour
         OnCharacterUpdated?.Invoke();
     }
 
+
     public void UpdateFromInventory()
     {
         equippedWeapon = Inventory.Instance.equippedWeapon;
@@ -89,7 +91,7 @@ public class Player : MonoBehaviour
         Debug.Log("Player 데이터가 Inventory에서 자동으로 동기화됐습니다");
     }
 
-    public void TakeDamge(int damge)
+    public void TakeDamage(int damge)
     {
         currentHP -= damge;
         Debug.Log($"레이븐이 {damge}의 데미지를 받았습니다");
@@ -166,7 +168,7 @@ public class EnemyScript : MonoBehaviour
         Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
     }
 
-    public void UseSkill(Player target)
+    public void UseSkill(Player target, MonoBehaviour caller)
     {
         if(enemyData == null || enemyData.skills == null || enemyData.skills.Count == 0)
         {
@@ -184,11 +186,17 @@ public class EnemyScript : MonoBehaviour
 
         Debug.Log($"{enemyData.enemyName}이(가) {selectedSkill.skillName}을 사용합니다");
 
-        selectedSkill.ExecuteSkill(this.gameObject, target.gameObject);
+        selectedSkill.ExecuteSkill(this.gameObject, target.gameObject, caller);
     }
 
-    private Skill ChooseSkill()
+    public Skill ChooseSkill()
     {
+        if(enemyData.skills == null || enemyData.skills.Count == 0)
+        {
+            Debug.LogError($"{enemyData.enemyName}에게 할당된 스킬이 없습니다");
+            return null;
+        }
+
         int randomIndex = UnityEngine.Random.Range(0, enemyData.skills.Count);
         return enemyData.skills[randomIndex];
     }
@@ -225,7 +233,6 @@ public class EnemyScript : MonoBehaviour
         return enemyData.skills;
     }
 }
-
 ~~~
 
 enemy Data
