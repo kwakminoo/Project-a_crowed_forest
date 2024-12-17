@@ -12,11 +12,11 @@
 
 예정 사항
 -----------
-플레이어/적 스크립트 완성, 배틀메니저에서 연동
-인벤토리창에서 아이템/스킬 창 프리펩화하여 최적화
-NullReferenceException: Object reference not set to an instance of an object
-InventoryManager.UpdateEquipmentImages () (at Assets/Resources/Inventory/Inventory Manager.cs:198)
-InventoryManager.Start () (at Assets/Resources/Inventory/Inventory Manager.cs:51)
+배틀 시스템 완성
+
+배틀창이 떠있을 떄는 다이얼로그 멈추기
+
+스토리 텍스트가 선택지를 누루더라도 그 텍스트가 같은 타이틀 내에 있으면 새로 텍스트를 출력하는것이 아닌 그냥 버튼 밑에 생성하고 버튼이 사라지지 않게 하기
 
 2.5D게임에서의 게임오브젝트 요소에 대해 알아보기
 간단한 턴제전투 완성하기
