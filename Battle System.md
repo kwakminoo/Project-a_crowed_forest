@@ -155,7 +155,7 @@ public class BattleManager : MonoBehaviour
 
         yield return StartCoroutine(ShowActionWithCameraZoom(() =>
         {
-            currentEnemy.UseSkill(player);
+            currentEnemy.UseSkill(player, this);
         }));
 
         UpdateBattleState();
@@ -163,6 +163,7 @@ public class BattleManager : MonoBehaviour
         if(player.currentHP <= 0)
         {
             isBattleActive = false;
+            EndBattle();
         }
 
         yield return new WaitForSeconds(1f);
@@ -177,7 +178,7 @@ public class BattleManager : MonoBehaviour
         //스킬 버튼 활성호 및 클릭 대기
         for(int i = 0; i < skillButtons.Count; i++)
         {
-            int skillIndex = 1;
+            int skillIndex = i;
             skillButtons[i].onClick.RemoveAllListeners();
             skillButtons[i].onClick.AddListener(() =>
             {
@@ -208,12 +209,23 @@ public class BattleManager : MonoBehaviour
         }
 
         Skill skill = battleSkills[skillIndex];
-        skill.ExecuteSkill(player.gameObject, currentEnemy.gameObject);
+        StartCoroutine(ShowActionWithCameraZoom(() =>
+        {
+            skill.ExecuteSkill(player.gameObject, currentEnemy.gameObject, this);
+        }));
+        
+        if(currentEnemy.gameObject == null)
+        {
+            Debug.LogError("적 오브젝트가 없습니다");
+        }
+
+
         UpdateBattleState();
 
         if(currentEnemy.currentHP <= 0)
         {
             currentEnemy.Die(); //적 죽음 처리
+            isBattleActive = false;
             EndBattle();
         }
     }
@@ -221,16 +233,30 @@ public class BattleManager : MonoBehaviour
     private IEnumerator ShowActionWithCameraZoom(System.Action action)
     {
         float originalSize = mainCamera.orthographicSize;
-        mainCamera.orthographicSize = originalSize / 2;
-        yield return new WaitForSeconds(0.5f);
+        float zoomedSize = originalSize * 2;
+        float duration = 0.5f; //카메라 확대 축소 시간
+        float elapsedTime = 0;
 
-        //슬로우 모션 효과와 함께 액션 실행
-        Time.timeScale = 0.5f;
+        while(elapsedTime < duration)
+        {
+            mainCamera.orthographicSize = Mathf.Lerp(originalSize, zoomedSize, elapsedTime * duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        mainCamera.orthographicSize = zoomedSize;
+
         action?.Invoke();
         yield return new WaitForSecondsRealtime(1.0f);
-        Time.timeScale = 1.0f;
 
         //카메라 복원
+        elapsedTime = 0;
+        while(elapsedTime < duration)
+        {
+            mainCamera.orthographicSize = Mathf.Lerp(zoomedSize, originalSize, elapsedTime * duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
         mainCamera.orthographicSize = originalSize;
     }
 
@@ -270,6 +296,16 @@ public class BattleManager : MonoBehaviour
         {
             enemyNameText.text = data.enemyName; //적 이름 설정
             enemyImage.sprite = data.enemySprite; //적 이미지 설정
+
+            SpriteRenderer enemyRenderer = enemyObject.GetComponentInChildren<SpriteRenderer>();
+            if(enemyRenderer != null)
+            {
+                enemyRenderer.sprite = data.enemySprite; //적 유닛 스프라이트
+            }
+            else
+            {
+                Debug.LogError("적 오브젝트에 SpriteRenderer가 없습니다");
+            }
         }
 
         Sprite backGroundSprite = Resources.Load<Sprite>($"Battle Background/{backGroundName}");
@@ -308,7 +344,7 @@ public class BattleManager : MonoBehaviour
         Debug.Log("전투 종료");
         if(player.currentHP <= 0)
         {
-            Debug.Log("{currentEnemy.enemyData.enemyName} 승리");
+            Debug.Log($"{currentEnemy.enemyData.enemyName} 승리");
         }
         else if(currentEnemy.currentHP <= 0)
         {
