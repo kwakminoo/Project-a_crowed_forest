@@ -166,53 +166,192 @@ public class CustemLineView : DialogueViewBase
 ~~~
 
 
-전투창 출력
+커스텀 라인뷰 수정
 -
 ~~~C#
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Yarn.Unity;
+using System.Collections;
 
-public class BattleManager : MonoBehaviour
+public class CustomLineView : DialogueViewBase
 {
-    public GameObject battleWindow;
-    public Image enemyImage;
-    public TextMeshProUGUI enemyNameText;
-    public Image backGroundImage;
+    public Transform contentParent; // Scroll View의 Content 객체
+    public GameObject textPrefab;   // 텍스트 프리팹
+    public GameObject imagePrefab;  // 이미지 프리팹
+    public GameObject buttonPrefab; // 선택지 버튼 프리팹
+    public ScrollRect scrollRect;   // 스크롤 가능한 영역
+    private System.Action onDialogueLineFinishedCallback;
 
-    public void StartBattle(string enemyName, string enemySpriteName, string backGroundName)
+    public float typingSpeed = 0.05f;
+    private bool isTyping = false;
+    private string fullText;
+
+    private bool isBattleActive = false; // **수정: 배틀 활성 상태 플래그 추가**
+
+    void Start()
     {
-        battleWindow.SetActive(true);
-
-        enemyNameText.text = enemyName;
-
-        Sprite enemySprite = Resources.Load<Sprite>($"Character/{enemySpriteName}");
-        if(enemySprite != null)
+        var dialogueRunner = FindObjectOfType<DialogueRunner>();
+        if (dialogueRunner != null)
         {
-            enemyImage.sprite = enemySprite;
+            dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
+            dialogueRunner.AddCommandHandler<string, string>("start_Battle", StartBattleCommand); // **수정: 배틀 시작 명령어 추가**
         }
         else
         {
-            Debug.LogError($"{enemySpriteName}을 찾을 수 없습니다");
-        }
-
-        Sprite backGroundSprite = Resources.Load<Sprite>($"Battle Background/{backGroundName}");
-        if(backGroundSprite != null)
-        {
-            backGroundImage.sprite = backGroundSprite;
-        }
-        else
-        {
-            Debug.LogError($"{backGroundName}을 찾을 수 없습니다");
+            Debug.LogError("다이얼로그 러너를 찾을 수 없습니다");
         }
     }
 
-    public void EndBattle()
+    public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-        battleWindow.SetActive(false);
+        if (isBattleActive) // **수정: 배틀 중일 경우 출력 중단**
+        {
+            onDialogueLineFinished?.Invoke();
+            return;
+        }
+
+        onDialogueLineFinishedCallback = onDialogueLineFinished;
+
+        scrollRect.GetComponent<Button>().onClick.RemoveAllListeners();
+        scrollRect.GetComponent<Button>().onClick.AddListener(() => CompleteTyping());
+
+        StartCoroutine(TypeLine(line, onDialogueLineFinished));
+    }
+
+    private IEnumerator TypeLine(LocalizedLine line, System.Action onDialogueLineFinished)
+    {
+        isTyping = true;
+        fullText = line.TextWithoutCharacterName.Text;
+
+        // 기존 텍스트와 버튼 유지 (새로운 텍스트를 아래에 추가)
+        GameObject textObject = Instantiate(textPrefab, contentParent);
+        TextMeshProUGUI storyText = textObject.GetComponent<TextMeshProUGUI>();
+        storyText.text = "";
+
+        foreach (char letter in fullText.ToCharArray())
+        {
+            if (!isTyping) break;
+            storyText.text += letter;
+            yield return new WaitForSeconds(typingSpeed);
+        }
+
+        isTyping = false;
+        storyText.text = fullText;
+        onDialogueLineFinished?.Invoke();
+
+        ScrollToBottom();
+    }
+
+    private void CompleteTyping()
+    {
+        if (isTyping)
+        {
+            isTyping = false;
+            var storyTexts = contentParent.GetComponentsInChildren<TextMeshProUGUI>();
+            if (storyTexts.Length > 0)
+            {
+                storyTexts[storyTexts.Length - 1].text = fullText; // 마지막 텍스트 완성
+            }
+        }
+        else
+        {
+            onDialogueLineFinishedCallback?.Invoke();
+        }
+    }
+
+    public void ShowImage(string imageName)
+    {
+        Sprite image = Resources.Load<Sprite>($"Images/{imageName}");
+
+        if (image == null)
+        {
+            Debug.LogError($"{imageName}을 찾을 수 없습니다");
+            return;
+        }
+
+        GameObject imageObject = Instantiate(imagePrefab, contentParent);
+        Image imageComponent = imageObject.GetComponent<Image>();
+        if (imageComponent == null)
+        {
+            Debug.LogError("이미지 컴포넌트를 찾을 수 없습니다");
+            return;
+        }
+        imageComponent.sprite = image;
+        imageObject.SetActive(true);
+        imageObject.transform.SetAsFirstSibling();
+    }
+
+    public void StartBattleCommand(string enemyDataName, string backGroundName)
+    {
+        isBattleActive = true; // **수정: 배틀 활성화 플래그 설정**
+
+        EnemyData enemyData = Resources.Load<EnemyData>($"Character/{enemyDataName}");
+        if (enemyData == null)
+        {
+            Debug.LogError($"적 데이터 {enemyDataName}을 찾을 수 없습니다.");
+            return;
+        }
+
+        var battleManager = FindObjectOfType<BattleManager>();
+        if (battleManager != null)
+        {
+            battleManager.StartBattle(enemyData, backGroundName);
+
+            // 배틀 종료 후 스토리 재개
+            StartCoroutine(WaitForBattleEnd(battleManager));
+        }
+        else
+        {
+            Debug.LogError("BattleManager를 찾을 수 없습니다.");
+        }
+    }
+
+    private IEnumerator WaitForBattleEnd(BattleManager battleManager)
+    {
+        while (battleManager.IsBattleActive()) // **수정: 배틀 진행 중 체크**
+        {
+            yield return null;
+        }
+
+        isBattleActive = false; // **수정: 배틀 종료 후 플래그 해제**
+        Debug.Log("배틀 종료. 스토리 재개.");
+    }
+
+    public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
+    {
+        if (isBattleActive) return; // **수정: 배틀 중 선택지 출력 중단**
+
+        foreach (var option in options)
+        {
+            GameObject buttonObject = Instantiate(buttonPrefab, contentParent);
+            var buttonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>();
+            if (buttonText != null)
+            {
+                buttonText.text = option.Line.TextWithoutCharacterName.Text;
+            }
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.onClick.AddListener(() => onOptionSelected(option.ID));
+        }
+
+        ScrollToBottom();
+    }
+
+    private void ScrollToBottom()
+    {
+        Canvas.ForceUpdateCanvases();
+        scrollRect.verticalNormalizedPosition = 0f;
+    }
+
+    // **추가: 타이틀 시작 시 텍스트/버튼 초기화**
+    private void ClearContent()
+    {
+        foreach (Transform child in contentParent)
+        {
+            Destroy(child.gameObject);
+        }
     }
 }
 
