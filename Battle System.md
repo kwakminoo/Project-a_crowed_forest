@@ -237,6 +237,7 @@ public class BattleManager : MonoBehaviour
         float duration = 0.5f; //카메라 확대 축소 시간
         float elapsedTime = 0;
 
+        //카메라 확대
         while(elapsedTime < duration)
         {
             mainCamera.orthographicSize = Mathf.Lerp(originalSize, zoomedSize, elapsedTime * duration);
@@ -288,26 +289,39 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public void StartBattle(EnemyScript enemy, string backGroundName)
+    public void StartBattle(EnemyData enemyData, string backGroundName)
     {
-        currentEnemy = enemy;
-        EnemyData data = currentEnemy.enemyData;
-        if(data != null)
+        currentEnemy = enemyObject.GetComponent<EnemyScript>();
+        if (currentEnemy == null)
         {
-            enemyNameText.text = data.enemyName; //적 이름 설정
-            enemyImage.sprite = data.enemySprite; //적 이미지 설정
+            Debug.LogError("EnemyObject에 EnemyScript가 없습니다.");
+            return;
+        }
+        
+        if(enemyData != null)
+        {
+            currentEnemy.InitializeEnemy(enemyData);
+            
+            enemyNameText.text = enemyData.enemyName; //적 이름 설정
+            enemyImage.sprite = enemyData.enemySprite; //적 이미지 설정
 
             SpriteRenderer enemyRenderer = enemyObject.GetComponentInChildren<SpriteRenderer>();
             if(enemyRenderer != null)
             {
-                enemyRenderer.sprite = data.enemySprite; //적 유닛 스프라이트
+                enemyRenderer.sprite = enemyData.enemySprite; //적 유닛 스프라이트
             }
             else
             {
                 Debug.LogError("적 오브젝트에 SpriteRenderer가 없습니다");
             }
         }
+        else
+        {
+            Debug.LogError("적 데이터가 null입니다. 초기화를 중단합니다.");
+            return;
+        }
 
+        //배경 설정
         Sprite backGroundSprite = Resources.Load<Sprite>($"Battle Background/{backGroundName}");
         if(backGroundSprite != null)
         {
