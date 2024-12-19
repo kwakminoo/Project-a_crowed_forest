@@ -369,6 +369,43 @@ public class BattleManager : MonoBehaviour
 }
 ~~~
 
+InventorySync
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class InventorySync : MonoBehaviour
+{
+    public Player player;
+    public Inventory inventory;
+
+    void Awake()
+    {
+        player = GetComponent<Player>();
+
+        if (player == null)
+        {
+            Debug.LogError("InventorySync는 Player 스크립트가 필요합니다.");
+        }
+    }
+
+    public void SyncData(Player player)
+    {
+        // 플레이어 데이터 동기화
+        player.equippedWeapon = Inventory.Instance.equippedWeapon;
+        player.equippedTop = Inventory.Instance.equippedTop;
+        player.equippedBottom = Inventory.Instance.equippedBottom;
+
+        // 스킬 슬롯 데이터 동기화
+        player.skillSlots = new List<Skill>(Inventory.Instance.skillSlots);
+
+        Debug.Log("플레이어와 인벤토리 데이터가 동기화되었습니다.");
+    }
+
+}
+~~~
+
 QTR 턴제 전투
 -------------
 1. 기본 개념<br>
