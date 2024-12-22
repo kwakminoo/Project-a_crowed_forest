@@ -10,6 +10,8 @@
 
 * [Mark Down](https://inpa.tistory.com/entry/MarkDown-%F0%9F%93%9A-%EB%A7%88%ED%81%AC%EB%8B%A4%EC%9A%B4-%EB%AC%B8%EB%B2%95-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC)
 
+###### 기억하자 코딩은 AI가 더 잘하지만 생각은 내가 더 잘한다...내가 옳다
+
 예정 사항
 -----------
 배틀 시스템 완성
