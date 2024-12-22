@@ -52,7 +52,7 @@ Main Camara
 │   │   │   │   │   │   └── EnemyHPText
 │   │   │   │   │   ├── EnemyName (Image)
 │   │   │   │   │   │   └── Text
-│   │   │   │   ├── PlayerObject(Player 스크립트)
+│   │   │   │   ├── PlayerObject
 │   │   │   │   │   ├── Raven (Image)
 │   │   │   │   │   ├── PlayerHP
 │   │   │   │   │   │   ├── HPBar
