@@ -144,95 +144,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class EnemyScript : MonoBehaviour
-{
-    public EnemyData enemyData;
-    public int currentHP; //현재 체력
-    public int maxHP;
-    private Animator animator;
-    
-    private void Awake()
-    {
-        if(enemyData != null)
-        {
-            InitializeEnemy(enemyData);
-        }
-    }
-
-    //적 데이터 초기화
-    public void InitializeEnemy(EnemyData data)
-    {
-        enemyData = data;
-        currentHP = data.maxHP;
-        Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
-    }
-
-    public void UseSkill(Player target, MonoBehaviour caller)
-    {
-        if(enemyData == null || enemyData.skills == null || enemyData.skills.Count == 0)
-        {
-            Debug.LogError("적 스킬이 설정 되지 않았습니다");
-            return;
-        }
-
-        Skill selectedSkill = ChooseSkill();
-
-        if(selectedSkill == null)
-        {
-            Debug.LogError($"{enemyData.enemyName}이(가) 사용할 수 있는 스킬이 없습니다");
-            return;
-        }
-
-        Debug.Log($"{enemyData.enemyName}이(가) {selectedSkill.skillName}을 사용합니다");
-
-        selectedSkill.ExecuteSkill(this.gameObject, target.gameObject, caller);
-    }
-
-    public Skill ChooseSkill()
-    {
-        if(enemyData.skills == null || enemyData.skills.Count == 0)
-        {
-            Debug.LogError($"{enemyData.enemyName}에게 할당된 스킬이 없습니다");
-            return null;
-        }
-
-        int randomIndex = UnityEngine.Random.Range(0, enemyData.skills.Count);
-        return enemyData.skills[randomIndex];
-    }
-
-    //체력 변경 메소드
-    public void TakeDamage(int damage)
-    {
-        currentHP -= damage;
-        Debug.Log($"{enemyData.enemyName}이(가) {damage}의 데미지를 받았습니다");
-
-        if(currentHP <= 0)
-        {
-            Die();
-        }
-    }
-
-    public void Die()
-    {
-        if(enemyData.deathAnimation != null)
-        {
-            Debug.Log($"{enemyData.enemyName}이(가) 쓰러졌습니다");
-            Animator animator = GetComponent<Animator>();
-            if(animator != null)
-            {
-                animator.Play(enemyData.deathAnimation.name);
-            }
-        }
-
-    }
-
-    //스킬 가져오기
-    public List<Skill> GetSkills()
-    {
-        return enemyData.skills;
-    }
-}
 ~~~
 
 enemy Data
