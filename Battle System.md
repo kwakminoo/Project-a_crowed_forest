@@ -369,41 +369,118 @@ public class BattleManager : MonoBehaviour
 }
 ~~~
 
-InventorySync
+Battle UI Manager
+---
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class BattleUIManager : MonoBehaviour
+{
+    public TextMeshProUGUI playerHPText;
+    public TextMeshProUGUI enemyHPText;
+    public GameObject battleResultWindow;
+
+    public void UpdateHP(int playerHP, int enemyHP)
+    {  
+        playerHPText.text = $"Player HP: {playerHP}";
+        enemyHPText.text = $"Enemy HP: {enemyHP}";
+    }
+
+    public void ShowPlayerTurn()
+    {
+        Debug.Log("플레이어 턴 시작");
+    }
+
+    public void ShowEnemyTurn()
+    {
+        Debug.Log("적 턴 시작");
+    }
+    
+    public void ShowBattleResult(bool isPlayerWin)
+    {
+        battleResultWindow.SetActive(true);
+    }
+}
+~~~
+
+Battle Action Manager
+---
 ~~~C#
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InventorySync : MonoBehaviour
+public class BattleActionManager : MonoBehaviour
 {
-    public Player player;
-    public Inventory inventory;
+    private BattleStateManager stateManager;
 
-    void Awake()
+    public IEnumerator ExecutePlayerAction()
     {
-        player = GetComponent<Player>();
+        yield return new WaitUntill( stateManager.IsPlayerActionCompleted);
+    }
 
-        if (player == null)
+    public IEnumerator ExecuteEnemyAction()
+    {
+        yield return new WaitForSeconds(1f);
+    }
+}
+~~~
+
+Battle State Manager
+---
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class BattleStateManager : MonoBehaviour
+{
+    public int playerHP;
+    public int enemyHP;
+    public bool IsBattleOver => playerHP <= 0 || enemyHP <= 0;
+    public bool IsPlayerWin => playerHP > 0;
+
+    public void ApplyDamage(bool toPlayer, int damage)
+    {
+        if(toPlayer)
         {
-            Debug.LogError("InventorySync는 Player 스크립트가 필요합니다.");
+            playerHP -= damage;
+        }
+        else
+        {
+            enemyHP -= damage;
         }
     }
-
-    public void SyncData(Player player)
-    {
-        // 플레이어 데이터 동기화
-        player.equippedWeapon = Inventory.Instance.equippedWeapon;
-        player.equippedTop = Inventory.Instance.equippedTop;
-        player.equippedBottom = Inventory.Instance.equippedBottom;
-
-        // 스킬 슬롯 데이터 동기화
-        player.skillSlots = new List<Skill>(Inventory.Instance.skillSlots);
-
-        Debug.Log("플레이어와 인벤토리 데이터가 동기화되었습니다.");
-    }
-
 }
+~~~
+
+기본적인 전투 흐름
+---
+~~~C#
+1. 전투 시작 (`BattleManager.StartBattle`):
+   - 플레이어와 적 데이터를 초기화.
+   - 전투 UI 활성화.
+   - `BattleRoutine`으로 진입.
+
+2. 턴 진행 (`BattleRoutine`):
+   - 플레이어 턴 시작:
+     - 스킬 버튼 활성화, 행동 대기.
+   - 적 턴 시작:
+     - 스킬 선택 후 실행.
+   - 전투 종료 조건 확인.
+
+3. 전투 종료:
+   - 승리/패배 결과 UI 표시.
+   - 전투 종료 후 정리 작업 수행.
+
+[전투 시작 대기] → [준비 모션(공격 시작, 카운터 준비 등)] → [슬로우 모션 상태(플레이어/적의 추가 입력 대기)] → [행동 결과 처리]
+↓                                                                            ↑
+[턴 종료 처리 후 다음 턴으로 전환]                        ←             [ActionSelection]
+
 ~~~
 
 QTR 턴제 전투
