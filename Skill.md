@@ -1,4 +1,4 @@
-스킬
+Skill
 -
 ~~~C#
 using System.Collections;
@@ -35,51 +35,54 @@ public class Skill : ScriptableObject, IItemData
 
     public void ExecuteSkill(GameObject attacker, GameObject target, MonoBehaviour caller)
     {
-        Debug.Log($"{skillName}을 사용");
+        if (string.IsNullOrEmpty(skillName) || successRate <= 0 || damage <= 0 || skillSprite == null)
+        {
+            Debug.LogError($"스킬 데이터가 유효하지 않습니다. 이름: {skillName}, 성공률: {successRate}, 데미지: {damage}, 스프라이트: {skillSprite}");
+            return;
+        }
+        
+        Debug.Log($"{skillName} 실행 - 설정된 데미지: {damage}");
+
+        float roll = UnityEngine.Random.Range(0f, 1f);
+        if (roll > successRate)
+        {
+            Debug.Log($"{skillName}이(가) 실패했습니다. (Roll: {roll}, Success Rate: {successRate})");
+            return;
+        }
+
 
         var enemyScript = target.GetComponent<EnemyScript>();
-        if(enemyScript != null)
+        if (enemyScript != null)
         {
+            Debug.Log($"{target.name}에 EnemyScript를 찾아 데미지 적용: {damage}");
             enemyScript.TakeDamage(damage);
-            Debug.Log($"{skillName}의 데미지: {damage}");
         }
 
         var player = target.GetComponent<Player>();
-        if(player != null)
+        if (player != null)
         {
+            Debug.Log($"{target.name}에 Player 컴포넌트를 찾아 데미지 적용: {damage}");
             player.TakeDamage(damage);
-            Debug.Log($"{skillName}의 데미지: {damage}");
-        }
-
-        if(skillSprite != null && caller != null)
-        {
-            SpriteRenderer renderer = attacker.GetComponentInChildren<SpriteRenderer>();
-            if(renderer != null)
-            {
-                caller.StartCoroutine(ShowSpriteEffect(renderer, skillSprite));
-            }
-            else
-            {
-                Debug.LogError($"{attacker.name}에 SpriteRenderer가 없습니다");
-            }
         }
     }
 
-    public void ShowSkillEffect(GameObject attacker, Sprite skillSprite)
+    public Skill Clone()
     {
-        SpriteRenderer renderer = attacker.GetComponentInChildren<SpriteRenderer>();
+        Skill clonedSkill = ScriptableObject.CreateInstance<Skill>();
+        clonedSkill.skillName = skillName;
+        clonedSkill.skillOption = skillOption;
+        clonedSkill.skillType = skillType;
+        clonedSkill.skillIcon = skillIcon;
+        clonedSkill.skillSprite = skillSprite;
+        //clonedSkill.slowMotionDuration = slowMotionDuration;
+        clonedSkill.skillEffect = skillEffect;
+        clonedSkill.grantsTurnOnSuccess = grantsTurnOnSuccess;
+        clonedSkill.damage = damage;
+        clonedSkill.santiDamage = santiDamage;
+        clonedSkill.defenseMultiplier = defenseMultiplier;
+        clonedSkill.successRate = successRate;
+        clonedSkill.counterAttackDamage = counterAttackDamage;
+        return clonedSkill;
     }
-
-    public IEnumerator ShowSpriteEffect(SpriteRenderer renderer, Sprite skillSprite)
-    {
-        Sprite origianlSprite = renderer.sprite;
-
-        renderer.sprite = skillSprite;
-        yield return new WaitForSeconds(0.5f);
-        
-        renderer.sprite = origianlSprite;
-    }
-
 }
-
 ~~~
