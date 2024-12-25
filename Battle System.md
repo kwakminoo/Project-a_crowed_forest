@@ -33,12 +33,17 @@ public class BattleManager : MonoBehaviour
     public Camera mainCamera;
     private bool isBattleActive = true;
 
+    //데이터 초기화
     private void Start()
     {
         inventory = Inventory.Instance ?? throw new NullReferenceException("Inventory.Instance가 null입니다.");
         player = playerObject.GetComponent<Player>() ?? Player.Instance;
         Player.Instance.OnCharacterUpdated += UpdateBattleCharacterImage;
         currentEnemy = enemyObject.GetComponent<EnemyScript>();
+        if (battleCharacterImage != null)
+        {
+            battleCharacterImage.sprite = player.baseCharacterSprite;
+        }
 
         if(player == null)
         {
@@ -56,51 +61,6 @@ public class BattleManager : MonoBehaviour
 
         //플레이어 죽는 이벤트 연결
         player.OnPlayerDeath += HandlePlayerDeath; 
-    }
-
-    private void UpdateBattleCharacterImage()
-    {
-        if(battleCharacterImage != null)
-        {
-            battleCharacterImage.sprite = Player.Instance.GetCompositeCharacterImage();
-
-            if(Player.Instance.equippedWeapon != null)
-            {
-                battleWeaponImage.sprite = Player.Instance.equippedWeapon.itemSprite;
-                battleWeaponImage.enabled = true;
-                battleWeaponImage.gameObject.SetActive(true);
-            }
-            else if(battleWeaponImage != null)
-            {
-                battleWeaponImage.sprite = null;
-                battleWeaponImage.enabled = false;
-                battleWeaponImage.gameObject.SetActive(false);
-            }
-            if(Player.Instance.equippedTop != null)
-            {
-                battleTopImage.sprite = Player.Instance.baseCharacterSprite;
-                battleTopImage.enabled = true;
-                battleTopImage.gameObject.SetActive(true);
-            }
-            else if(battleTopImage != null)
-            {
-                battleTopImage.sprite = null;
-                battleTopImage.enabled = false;
-                battleTopImage.gameObject.SetActive(false);
-            }
-            if(Player.Instance.equippedBottom != null)
-            {
-                battleBottomImage.sprite = Player.Instance.baseCharacterSprite;
-                battleBottomImage.enabled = true;
-                battleBottomImage.gameObject.SetActive(true);
-            }
-            else if(battleBottomImage != null)
-            {
-                battleBottomImage.sprite = null;
-                battleBottomImage.enabled = false;
-                battleBottomImage.gameObject.SetActive(false);
-            }
-        }
     }
 
     private void InitialzeSkillButtons()
@@ -134,6 +94,57 @@ public class BattleManager : MonoBehaviour
         } 
     }
 
+    public void StartBattle(EnemyData enemyData, string backGroundName)
+    {
+        currentEnemy = enemyObject.GetComponent<EnemyScript>();
+        if (currentEnemy == null)
+        {
+            Debug.LogError("EnemyObject에 EnemyScript가 없습니다.");
+            return;
+        }
+        
+        if(enemyData != null)
+        {
+            currentEnemy.InitializeEnemy(enemyData);
+            
+            enemyNameText.text = enemyData.enemyName; //적 이름 설정
+            enemyImage.sprite = enemyData.enemySprite; //적 이미지 설정
+
+            SpriteRenderer enemyRenderer = enemyObject.GetComponentInChildren<SpriteRenderer>();
+            if(enemyRenderer != null)
+            {
+                enemyRenderer.sprite = enemyData.enemySprite; //적 유닛 스프라이트
+            }
+            else
+            {
+                Debug.LogError("적 오브젝트에 SpriteRenderer가 없습니다");
+            }
+        }
+        else
+        {
+            Debug.LogError("적 데이터가 null입니다. 초기화를 중단합니다.");
+            return;
+        }
+
+        //배경 설정
+        Sprite backGroundSprite = Resources.Load<Sprite>($"Battle Background/{backGroundName}");
+        if(backGroundSprite != null)
+        {
+            backGroundImage.sprite = backGroundSprite;
+        }
+        else
+        {
+            Debug.LogError($"{backGroundName}을 찾을 수 없습니다");
+        }
+
+        battleWindow.SetActive(true);
+        UpdateBattleCharacterImage();
+        UpdateBattleState();
+        InitialzeSkillButtons();
+        StartCoroutine(BattleRoutine());
+    }
+
+   //전투 흐름
     private IEnumerator BattleRoutine()
     {
         while(isBattleActive)
@@ -198,7 +209,22 @@ public class BattleManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f); //플레이어 턴이 끝난 후 짧은 대기 
     }
+    
+    public void EndBattle()
+    {
+        Debug.Log("전투 종료");
+            if(player.currentHP <= 0)
+        {
+            Debug.Log($"{currentEnemy.enemyData.enemyName} 승리");
+        }
+        else if(currentEnemy.currentHP <= 0)
+        {
+            Debug.Log($"player 승리");
+        }
+        battleWindow.SetActive(false);
+    }
 
+    //스킬 사용
     public void UseSkill(int skillIndex)
     {
         List<Skill> battleSkills = player.GetBattleSkills();
@@ -213,13 +239,13 @@ public class BattleManager : MonoBehaviour
         {
             skill.ExecuteSkill(player.gameObject, currentEnemy.gameObject, this);
         }));
+        StartCoroutine(ShowSkillEffect(skill.skillSprite));
         
         if(currentEnemy.gameObject == null)
         {
             Debug.LogError("적 오브젝트가 없습니다");
         }
-
-
+        
         UpdateBattleState();
 
         if(currentEnemy.currentHP <= 0)
@@ -230,35 +256,69 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    private IEnumerator ShowActionWithCameraZoom(System.Action action)
+    private IEnumerator ShowSkillEffect(Sprite skillSprite)
     {
-        float originalSize = mainCamera.orthographicSize;
-        float zoomedSize = originalSize * 2;
-        float duration = 0.5f; //카메라 확대 축소 시간
-        float elapsedTime = 0;
-
-        //카메라 확대
-        while(elapsedTime < duration)
+        if(battleCharacterImage == null || skillSprite == null)
         {
-            mainCamera.orthographicSize = Mathf.Lerp(originalSize, zoomedSize, elapsedTime * duration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            Debug.LogError("배틀 캐릭터 이미지 또는 스킬 이미지가 설정되지 않았습니다.");
+            yield break;
         }
 
-        mainCamera.orthographicSize = zoomedSize;
+        battleCharacterImage.enabled = false;
+        Sprite originalImage = battleCharacterImage.sprite;
+        battleCharacterImage.sprite = skillSprite;
+        battleCharacterImage.enabled = true;
 
-        action?.Invoke();
-        yield return new WaitForSecondsRealtime(1.0f);
+        yield return new WaitForSeconds(1.0f);
 
-        //카메라 복원
-        elapsedTime = 0;
-        while(elapsedTime < duration)
+        battleCharacterImage.sprite = originalImage;
+        battleCharacterImage.enabled = true;
+    }
+
+    //UI업데이트
+    private void UpdateBattleCharacterImage()
+    {
+        if(battleCharacterImage != null)
         {
-            mainCamera.orthographicSize = Mathf.Lerp(zoomedSize, originalSize, elapsedTime * duration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
+            battleCharacterImage.sprite = Player.Instance.GetCompositeCharacterImage();
+
+            if(Player.Instance.equippedWeapon != null)
+            {
+                battleWeaponImage.sprite = Player.Instance.equippedWeapon.itemSprite;
+                battleWeaponImage.enabled = true;
+                battleWeaponImage.gameObject.SetActive(true);
+            }
+            else if(battleWeaponImage != null)
+            {
+                battleWeaponImage.sprite = null;
+                battleWeaponImage.enabled = false;
+                battleWeaponImage.gameObject.SetActive(false);
+            }
+            if(Player.Instance.equippedTop != null)
+            {
+                battleTopImage.sprite = Player.Instance.baseCharacterSprite;
+                battleTopImage.enabled = true;
+                battleTopImage.gameObject.SetActive(true);
+            }
+            else if(battleTopImage != null)
+            {
+                battleTopImage.sprite = null;
+                battleTopImage.enabled = false;
+                battleTopImage.gameObject.SetActive(false);
+            }
+            if(Player.Instance.equippedBottom != null)
+            {
+                battleBottomImage.sprite = Player.Instance.baseCharacterSprite;
+                battleBottomImage.enabled = true;
+                battleBottomImage.gameObject.SetActive(true);
+            }
+            else if(battleBottomImage != null)
+            {
+                battleBottomImage.sprite = null;
+                battleBottomImage.enabled = false;
+                battleBottomImage.gameObject.SetActive(false);
+            }
         }
-        mainCamera.orthographicSize = originalSize;
     }
 
     private void UpdateBattleState()
@@ -289,56 +349,6 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    public void StartBattle(EnemyData enemyData, string backGroundName)
-    {
-        currentEnemy = enemyObject.GetComponent<EnemyScript>();
-        if (currentEnemy == null)
-        {
-            Debug.LogError("EnemyObject에 EnemyScript가 없습니다.");
-            return;
-        }
-        
-        if(enemyData != null)
-        {
-            currentEnemy.InitializeEnemy(enemyData);
-            
-            enemyNameText.text = enemyData.enemyName; //적 이름 설정
-            enemyImage.sprite = enemyData.enemySprite; //적 이미지 설정
-
-            SpriteRenderer enemyRenderer = enemyObject.GetComponentInChildren<SpriteRenderer>();
-            if(enemyRenderer != null)
-            {
-                enemyRenderer.sprite = enemyData.enemySprite; //적 유닛 스프라이트
-            }
-            else
-            {
-                Debug.LogError("적 오브젝트에 SpriteRenderer가 없습니다");
-            }
-        }
-        else
-        {
-            Debug.LogError("적 데이터가 null입니다. 초기화를 중단합니다.");
-            return;
-        }
-
-        //배경 설정
-        Sprite backGroundSprite = Resources.Load<Sprite>($"Battle Background/{backGroundName}");
-        if(backGroundSprite != null)
-        {
-            backGroundImage.sprite = backGroundSprite;
-        }
-        else
-        {
-            Debug.LogError($"{backGroundName}을 찾을 수 없습니다");
-        }
-
-        battleWindow.SetActive(true);
-        UpdateBattleCharacterImage();
-        UpdateBattleState();
-        InitialzeSkillButtons();
-        StartCoroutine(BattleRoutine());
-    }
-
     private void HandlePlayerDeath()
     {
         PlayPlayerDeathAnimation();
@@ -352,108 +362,37 @@ public class BattleManager : MonoBehaviour
             playerAnimator.Play("PlayerDeath");
         }
     }
-
-    public void EndBattle()
-    {
-        Debug.Log("전투 종료");
-        if(player.currentHP <= 0)
-        {
-            Debug.Log($"{currentEnemy.enemyData.enemyName} 승리");
-        }
-        else if(currentEnemy.currentHP <= 0)
-        {
-            Debug.Log($"player 승리");
-        }
-        battleWindow.SetActive(false);
-    }
-}
-~~~
-
-Battle UI Manager
----
-~~~C#
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-
-public class BattleUIManager : MonoBehaviour
-{
-    public TextMeshProUGUI playerHPText;
-    public TextMeshProUGUI enemyHPText;
-    public GameObject battleResultWindow;
-
-    public void UpdateHP(int playerHP, int enemyHP)
-    {  
-        playerHPText.text = $"Player HP: {playerHP}";
-        enemyHPText.text = $"Enemy HP: {enemyHP}";
-    }
-
-    public void ShowPlayerTurn()
-    {
-        Debug.Log("플레이어 턴 시작");
-    }
-
-    public void ShowEnemyTurn()
-    {
-        Debug.Log("적 턴 시작");
-    }
     
-    public void ShowBattleResult(bool isPlayerWin)
+    //카메라 제어
+    private IEnumerator ShowActionWithCameraZoom(System.Action action)
     {
-        battleResultWindow.SetActive(true);
-    }
-}
-~~~
+        float originalSize = mainCamera.orthographicSize;
+        float zoomedSize = originalSize * 2;
+        float duration = 0.5f; //카메라 확대 축소 시간
+        float elapsedTime = 0;
 
-Battle Action Manager
----
-~~~C#
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class BattleActionManager : MonoBehaviour
-{
-    private BattleStateManager stateManager;
-
-    public IEnumerator ExecutePlayerAction()
-    {
-        yield return new WaitUntill( stateManager.IsPlayerActionCompleted);
-    }
-
-    public IEnumerator ExecuteEnemyAction()
-    {
-        yield return new WaitForSeconds(1f);
-    }
-}
-~~~
-
-Battle State Manager
----
-~~~C#
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class BattleStateManager : MonoBehaviour
-{
-    public int playerHP;
-    public int enemyHP;
-    public bool IsBattleOver => playerHP <= 0 || enemyHP <= 0;
-    public bool IsPlayerWin => playerHP > 0;
-
-    public void ApplyDamage(bool toPlayer, int damage)
-    {
-        if(toPlayer)
+        //카메라 확대
+        while(elapsedTime < duration)
         {
-            playerHP -= damage;
+            mainCamera.orthographicSize = Mathf.Lerp(originalSize, zoomedSize, elapsedTime * duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
-        else
+
+        mainCamera.orthographicSize = zoomedSize;
+
+        action?.Invoke();
+        yield return new WaitForSecondsRealtime(1.0f);
+
+        //카메라 복원
+        elapsedTime = 0;
+        while(elapsedTime < duration)
         {
-            enemyHP -= damage;
+            mainCamera.orthographicSize = Mathf.Lerp(zoomedSize, originalSize, elapsedTime * duration);
+            elapsedTime += Time.deltaTime;
+            yield return null;
         }
+        mainCamera.orthographicSize = originalSize;
     }
 }
 ~~~
