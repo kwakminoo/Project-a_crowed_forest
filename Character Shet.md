@@ -166,6 +166,14 @@ public class EnemyScript : MonoBehaviour
     public void InitializeEnemy(EnemyData data)
     {
         enemyData = data;
+        if(enemyData.skills != null)
+        {
+            enemyData.skills.RemoveAll(skill => skill == null || string.IsNullOrEmpty(skill.skillName));
+        }
+        else
+        {
+            Debug.LogError("EnemyData.skills가 null입니다.");
+        }
         currentHP = data.maxHP;
         Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
     }
@@ -186,28 +194,37 @@ public class EnemyScript : MonoBehaviour
             return;
         }
 
+        Debug.Log($"스킬 데이터 확인: 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
+
         Debug.Log($"{enemyData.enemyName}이(가) {selectedSkill.skillName}을 사용합니다");
 
-        //caller.StartCoroutine(ChangeEnemyImage(selectedSkill.skillSprite, 1.0f));
-
+        if (enemyImage != null)
+        {
+            caller.StartCoroutine(ChangeEnemyImage(selectedSkill.skillSprite, 1.0f));
+        }
         selectedSkill.ExecuteSkill(this.gameObject, target.gameObject, caller);
+        Debug.Log($"스킬 데이터 확인 (실행 후): 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
     }
 
     public IEnumerator ChangeEnemyImage(Sprite newSprite, float duration)
     {
         if (enemyImage != null)
-    {
-        // 기존 이미지 저장
-        Sprite originalSprite = enemyImage.sprite;
+        {
+            // 기존 이미지 저장
+            Sprite originalSprite = enemyImage.sprite;
 
-        // 스킬 이미지로 변경
-        enemyImage.sprite = newSprite;
+            // 스킬 이미지로 변경
+            enemyImage.sprite = newSprite;
 
-        yield return new WaitForSeconds(duration);
+            yield return new WaitForSeconds(duration);
 
-        // 기존 이미지로 복원
-        enemyImage.sprite = originalSprite;
-    }
+            // 기존 이미지로 복원
+            enemyImage.sprite = originalSprite;
+        }
+        else
+        {
+            Debug.LogError("enemyImage가 null 상태입니다. 이미지 변경이 불가능합니다.");
+        }
     }
 
     public Skill ChooseSkill()
@@ -218,8 +235,15 @@ public class EnemyScript : MonoBehaviour
             return null;
         }
 
+        List<Skill> validSkills = enemyData.skills.FindAll(GetSkills => GetSkills != null);
+        if(validSkills.Count == null)
+        {
+            Debug.LogError($"{enemyData.enemyName}에게 유효한 스킬이 없습니다");
+            return null;
+        }
+
         int randomIndex = UnityEngine.Random.Range(0, enemyData.skills.Count);
-        return enemyData.skills[randomIndex];
+        return validSkills[randomIndex]?.Clone(); // 방어적 복사
     }
 
     //체력 변경 메소드
