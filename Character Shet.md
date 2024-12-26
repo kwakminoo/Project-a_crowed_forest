@@ -166,19 +166,26 @@ public class EnemyScript : MonoBehaviour
     public void InitializeEnemy(EnemyData data)
     {
         enemyData = data;
-        if(enemyData.skills != null)
+        if (enemyData.skills != null)
         {
+            enemyData.skills = new List<Skill>(enemyData.skills); // 방어적 복사
             enemyData.skills.RemoveAll(skill => skill == null || string.IsNullOrEmpty(skill.skillName));
+            foreach (var skill in enemyData.skills)
+            {
+                Debug.Log($"적 스킬 초기화 확인: 이름={skill.skillName}, 성공률={skill.successRate}, 데미지={skill.damage}, 스프라이트={skill.skillSprite}");
+            }
         }
         else
         {
             Debug.LogError("EnemyData.skills가 null입니다.");
         }
+
         currentHP = data.maxHP;
         Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
     }
 
-    public void UseSkill(Player target, MonoBehaviour caller)
+
+    public void UseSkill(Player target)
     {
         if(enemyData == null || enemyData.skills == null || enemyData.skills.Count == 0)
         {
@@ -186,7 +193,7 @@ public class EnemyScript : MonoBehaviour
             return;
         }
 
-        Skill selectedSkill = ChooseSkill();
+        SkillRuntimeData selectedSkill = ChooseSkill();
 
         if(selectedSkill == null)
         {
@@ -200,11 +207,32 @@ public class EnemyScript : MonoBehaviour
 
         if (enemyImage != null)
         {
-            caller.StartCoroutine(ChangeEnemyImage(selectedSkill.skillSprite, 1.0f));
+            StartCoroutine(ChangeEnemyImage(selectedSkill.skillSprite, 1.0f));
         }
-        selectedSkill.ExecuteSkill(this.gameObject, target.gameObject, caller);
+        ExecuteSkillRuntime(selectedSkill, target); // 런타임 데이터 기반 실행
         Debug.Log($"스킬 데이터 확인 (실행 후): 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
     }
+
+    private void ExecuteSkillRuntime(SkillRuntimeData skill, Player target)
+    {
+        if (string.IsNullOrEmpty(skill.skillName) || skill.successRate <= 0 || skill.damage <= 0 || skill.skillSprite == null)
+        {
+            Debug.LogError($"스킬 데이터가 유효하지 않습니다. 이름: {skill.skillName}, 성공률: {skill.successRate}, 데미지: {skill.damage}, 스프라이트: {skill.skillSprite}");
+            return;
+        }
+
+        Debug.Log($"{skill.skillName} 실행 - 설정된 데미지: {skill.damage}");
+
+        float roll = UnityEngine.Random.Range(0f, 1f);
+        if (roll > skill.successRate)
+        {
+            Debug.Log($"{skill.skillName}이(가) 실패했습니다. (Roll: {roll}, Success Rate: {skill.successRate})");
+            return;
+        }
+
+        target.TakeDamage(skill.damage);
+    }
+
 
     public IEnumerator ChangeEnemyImage(Sprite newSprite, float duration)
     {
@@ -219,7 +247,14 @@ public class EnemyScript : MonoBehaviour
             yield return new WaitForSeconds(duration);
 
             // 기존 이미지로 복원
-            enemyImage.sprite = originalSprite;
+            if (originalSprite != null)
+            {
+                enemyImage.sprite = originalSprite;
+            }
+            else
+            {
+                Debug.LogWarning("originalSprite가 null입니다. 기본 이미지를 설정할 수 없습니다.");
+            }
         }
         else
         {
@@ -227,24 +262,42 @@ public class EnemyScript : MonoBehaviour
         }
     }
 
-    public Skill ChooseSkill()
+    public SkillRuntimeData ChooseSkill()
     {
-        if(enemyData.skills == null || enemyData.skills.Count == 0)
+        if (enemyData.skills == null || enemyData.skills.Count == 0)
         {
             Debug.LogError($"{enemyData.enemyName}에게 할당된 스킬이 없습니다");
             return null;
         }
 
-        List<Skill> validSkills = enemyData.skills.FindAll(GetSkills => GetSkills != null);
-        if(validSkills.Count == null)
+        Debug.Log("EnemyData.skills 상태 점검 (ChooseSkill 호출 전):");
+        foreach (var skill in enemyData.skills)
+        {
+            if (skill == null)
+            {
+                Debug.LogWarning("스킬이 null 상태입니다.");
+            }
+            else
+            {
+                Debug.Log($"스킬: 이름={skill.skillName}, 성공률={skill.successRate}, 데미지={skill.damage}, 스프라이트={skill.skillSprite}");
+            }
+        }
+
+        List<Skill> validSkills = enemyData.skills.FindAll(skill => skill != null);
+        if (validSkills.Count == 0)
         {
             Debug.LogError($"{enemyData.enemyName}에게 유효한 스킬이 없습니다");
             return null;
         }
 
-        int randomIndex = UnityEngine.Random.Range(0, enemyData.skills.Count);
-        return validSkills[randomIndex]?.Clone(); // 방어적 복사
+        int randomIndex = UnityEngine.Random.Range(0, validSkills.Count);
+        Skill selectedSkill = validSkills[randomIndex];
+
+        Debug.Log($"선택된 스킬: 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
+
+        return new SkillRuntimeData(selectedSkill.Clone());
     }
+
 
     //체력 변경 메소드
     public void TakeDamage(int damage)
