@@ -86,3 +86,50 @@ public class Skill : ScriptableObject, IItemData
     }
 }
 ~~~
+
+SkillRunTimeData
+---
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+[System.Serializable]
+public class SkillRuntimeData
+{
+    public string skillName;
+    public string skillOption;
+    public SkillType skillType;
+    public Sprite skillIcon;
+    public Sprite skillSprite;
+    public int damage;
+    public float santiDamage;
+    public float defenseMultiplier;
+    public float successRate;
+    public float counterAttackDamage;
+
+    public SkillRuntimeData(Skill baseSkill)
+    {
+        if (baseSkill == null)
+        {
+            Debug.LogError("SkillRuntimeData 생성 중 baseSkill이 null입니다.");
+            return;
+        }
+
+        Debug.Log($"SkillRuntimeData 생성 전 baseSkill 상태: 이름={baseSkill.skillName}, 성공률={baseSkill.successRate}, 데미지={baseSkill.damage}, 스프라이트={baseSkill.skillSprite}");
+
+        skillName = baseSkill.skillName;
+        skillOption = baseSkill.skillOption;
+        skillType = baseSkill.skillType;
+        skillIcon = baseSkill.skillIcon;
+        skillSprite = baseSkill.skillSprite;
+        damage = baseSkill.damage;
+        santiDamage = baseSkill.santiDamage;
+        defenseMultiplier = baseSkill.defenseMultiplier;
+        successRate = baseSkill.successRate;
+        counterAttackDamage = baseSkill.counterAttackDamage;
+
+        Debug.Log($"SkillRuntimeData 생성 완료: 이름={skillName}, 성공률={successRate}, 데미지={damage}, 스프라이트={skillSprite}");
+    }
+}
+~~~
