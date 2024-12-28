@@ -31,11 +31,22 @@ public class BattleManager : MonoBehaviour
     public TextMeshProUGUI enemyHPText;
 
     public Camera mainCamera;
+    public Camera battleCamera;
+
     private bool isBattleActive = true;
 
     //데이터 초기화
     private void Start()
     {
+        if(mainCamera != null)
+        {
+            mainCamera.enabled = true;
+        }
+        if(battleCamera != null)
+        {
+            battleCamera.enabled = false;
+        }
+
         inventory = Inventory.Instance ?? throw new NullReferenceException("Inventory.Instance가 null입니다.");
         player = playerObject.GetComponent<Player>() ?? Player.Instance;
         Player.Instance.OnCharacterUpdated += UpdateBattleCharacterImage;
@@ -164,10 +175,13 @@ public class BattleManager : MonoBehaviour
     {
         Debug.Log($"{currentEnemy.enemyData.enemyName}의 턴 시작");
 
-        yield return StartCoroutine(ShowActionWithCameraZoom(() =>
-        {
-            currentEnemy.UseSkill(player, this);
-        }));
+        // 카메라 전환: Battle Camera 활성화
+        SwitchToBattleCamera();
+
+        currentEnemy.UseSkill(player);
+
+        yield return new WaitForSeconds(2.0f);
+        SwitchToMainCamera();
 
         UpdateBattleState();
 
@@ -235,11 +249,16 @@ public class BattleManager : MonoBehaviour
         }
 
         Skill skill = battleSkills[skillIndex];
-        StartCoroutine(ShowActionWithCameraZoom(() =>
-        {
-            skill.ExecuteSkill(player.gameObject, currentEnemy.gameObject, this);
-        }));
+            
+        skill.ExecuteSkill(player.gameObject, currentEnemy.gameObject, this);
+
         StartCoroutine(ShowSkillEffect(skill.skillSprite));
+
+        // 카메라 전환: Battle Camera 활성화
+        SwitchToBattleCamera();
+
+        // 스킬 실행
+        StartCoroutine(ExecuteSkillWithCamera(skill));
         
         if(currentEnemy.gameObject == null)
         {
@@ -393,6 +412,69 @@ public class BattleManager : MonoBehaviour
             yield return null;
         }
         mainCamera.orthographicSize = originalSize;
+    }
+
+    public void SwitchToBattleCamera()
+    {
+        if(mainCamera != null)
+        {
+            mainCamera.enabled = false;
+        }
+        if(battleCamera != null)
+        {
+            battleCamera.enabled = true;
+        }
+
+        Debug.Log("battle Camera 활성화");
+    }
+
+    public void SwitchToMainCamera()
+    {
+        if(mainCamera != null)
+        {
+            mainCamera.enabled = true;
+        }
+        if(battleCamera != null)
+        {
+            battleCamera.enabled = false;
+        }
+
+        Debug.Log("Main Camera 활성화");
+    }
+
+    // 일정 시간 후 카메라 전환
+    public IEnumerator SwitchBackToMainCameraAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        SwitchToMainCamera();
+    }
+
+    // 스킬 사용 시 카메라 전환
+    public void HandleSkillCameraTransition(Player player, SkillRuntimeData skill)
+    {
+        if (player == null || skill == null) return;
+
+        // 배틀 카메라 활성화
+        SwitchToBattleCamera();
+
+        // 스킬 연출 후 일정 시간 뒤 메인 카메라로 복귀
+        StartCoroutine(SwitchBackToMainCameraAfterDelay(2.0f));
+    }
+
+    private IEnumerator ExecuteSkillWithCamera(Skill skill)
+    {
+        if (skill == null)
+        {
+            Debug.LogError("스킬 데이터가 null입니다.");
+            yield break;
+        }
+
+        // 카메라 전환 효과 및 스킬 연출
+        Debug.Log($"스킬 연출 시작: {skill.skillName}");
+        yield return new WaitForSeconds(2.0f); // 연출 대기 (예시)
+
+        // 연출 종료 후 카메라 복귀
+        yield return SwitchBackToMainCameraAfterDelay(1.0f);
     }
 }
 ~~~
