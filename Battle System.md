@@ -30,21 +30,23 @@ public class BattleManager : MonoBehaviour
     public TextMeshProUGUI playerHPText;
     public TextMeshProUGUI enemyHPText;
 
+    private Canvas mainCanvas;
     public Camera mainCamera;
     public Camera battleCamera;
 
     private bool isBattleActive = true;
 
+    public DialogueRunner dialogueRunner;
+    private string nextNode;
+
     //데이터 초기화
     private void Start()
     {
-        if(mainCamera != null)
+        mainCanvas = FindObjectOfType<Canvas>();
+        if(mainCanvas != null)
         {
-            mainCamera.enabled = true;
-        }
-        if(battleCamera != null)
-        {
-            battleCamera.enabled = false;
+            mainCanvas.worldCamera = mainCamera;
+            Debug.Log("Canvas의 Event Camera가 Main Camera로 초기 설정되었습니다.");
         }
 
         inventory = Inventory.Instance ?? throw new NullReferenceException("Inventory.Instance가 null입니다.");
@@ -105,8 +107,19 @@ public class BattleManager : MonoBehaviour
         } 
     }
 
-    public void StartBattle(EnemyData enemyData, string backGroundName)
+    public void StartBattle(EnemyData enemyData, string backGroundName, string nextYarnNode)
     {
+        if (dialogueRunner != null)
+        {
+            if (dialogueRunner.IsDialogueRunning) // 실행 중인지 확인
+            {
+                dialogueRunner.Stop(); // 실행 중이면 대화 중단
+                Debug.Log("DialogueRunner: 스토리 출력 중단");
+            }
+
+            nextNode = nextYarnNode; // 다음 노드 저장
+        }
+
         currentEnemy = enemyObject.GetComponent<EnemyScript>();
         if (currentEnemy == null)
         {
@@ -120,16 +133,6 @@ public class BattleManager : MonoBehaviour
             
             enemyNameText.text = enemyData.enemyName; //적 이름 설정
             enemyImage.sprite = enemyData.enemySprite; //적 이미지 설정
-
-            SpriteRenderer enemyRenderer = enemyObject.GetComponentInChildren<SpriteRenderer>();
-            if(enemyRenderer != null)
-            {
-                enemyRenderer.sprite = enemyData.enemySprite; //적 유닛 스프라이트
-            }
-            else
-            {
-                Debug.LogError("적 오브젝트에 SpriteRenderer가 없습니다");
-            }
         }
         else
         {
@@ -174,6 +177,8 @@ public class BattleManager : MonoBehaviour
     private IEnumerator EnemyTurn()
     {
         Debug.Log($"{currentEnemy.enemyData.enemyName}의 턴 시작");
+
+        yield return new WaitForSeconds(1f);
 
         // 카메라 전환: Battle Camera 활성화
         SwitchToBattleCamera();
@@ -236,6 +241,20 @@ public class BattleManager : MonoBehaviour
             Debug.Log($"player 승리");
         }
         battleWindow.SetActive(false);
+
+        // 스토리 출력 재개
+        if (dialogueRunner != null)
+        {
+            if (!dialogueRunner.IsDialogueRunning && !string.IsNullOrEmpty(nextNode))
+            {
+                dialogueRunner.StartDialogue(nextNode); // 저장된 노드에서 대화 시작
+                Debug.Log($"DialogueRunner: 대화 시작. 노드: {nextNode}");
+            }
+            else
+            {
+                Debug.LogWarning("DialogueRunner가 실행 중이거나 노드가 설정되지 않았습니다.");
+            }
+        }
     }
 
     //스킬 사용
@@ -416,31 +435,51 @@ public class BattleManager : MonoBehaviour
 
     public void SwitchToBattleCamera()
     {
-        if(mainCamera != null)
+        if (battleCamera != null)
         {
-            mainCamera.enabled = false;
+            battleCamera.gameObject.SetActive(true);
+            Debug.Log("Battle Camera 렌더링 활성화됨");
         }
-        if(battleCamera != null)
+        else
         {
-            battleCamera.enabled = true;
+            Debug.LogError("Battle Camera가 참조되지 않았습니다.");
         }
 
-        Debug.Log("battle Camera 활성화");
+        // Canvas의 Event Camera 설정
+        if (mainCanvas != null)
+        {
+            mainCanvas.worldCamera = battleCamera;
+            Debug.Log("Canvas의 Event Camera가 Battle Camera로 설정되었습니다.");
+        }
+
+        if (mainCamera != null)
+        {
+            mainCamera.gameObject.SetActive(false);
+            Debug.Log("Main Camera 비활성화됨");
+        }
     }
+
 
     public void SwitchToMainCamera()
     {
-        if(mainCamera != null)
+        if (battleCamera != null)
         {
-            mainCamera.enabled = true;
+            battleCamera.gameObject.SetActive(false);
+            Debug.Log("Battle Camera 비활성화됨");
         }
-        if(battleCamera != null)
+        if (mainCamera != null)
         {
-            battleCamera.enabled = false;
+            mainCamera.gameObject.SetActive(true);
+            Debug.Log("Main Camera 활성화됨");
         }
 
-        Debug.Log("Main Camera 활성화");
-    }
+        // Canvas의 Event Camera 설정
+        if (mainCanvas != null)
+        {
+            mainCanvas.worldCamera = mainCamera;
+            Debug.Log("Canvas의 Event Camera가 Main Camera로 설정되었습니다.");
+        }
+    }   
 
     // 일정 시간 후 카메라 전환
     public IEnumerator SwitchBackToMainCameraAfterDelay(float delay)
