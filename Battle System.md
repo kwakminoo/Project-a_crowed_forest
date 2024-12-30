@@ -182,11 +182,13 @@ public class BattleManager : MonoBehaviour
 
         // 카메라 전환: Battle Camera 활성화
         SwitchToBattleCamera();
+        yield return new WaitForSeconds(1.0f);
 
         currentEnemy.UseSkill(player);
 
         yield return new WaitForSeconds(2.0f);
         SwitchToMainCamera();
+        yield return new WaitForSeconds(0.5f); // 카메라 복귀 대기
 
         UpdateBattleState();
 
@@ -231,6 +233,7 @@ public class BattleManager : MonoBehaviour
     
     public void EndBattle()
     {
+        SwitchToMainCamera();
         Debug.Log("전투 종료");
             if(player.currentHP <= 0)
         {
@@ -462,22 +465,21 @@ public class BattleManager : MonoBehaviour
 
     public void SwitchToMainCamera()
     {
-        if (battleCamera != null)
-        {
-            battleCamera.gameObject.SetActive(false);
-            Debug.Log("Battle Camera 비활성화됨");
-        }
         if (mainCamera != null)
         {
             mainCamera.gameObject.SetActive(true);
             Debug.Log("Main Camera 활성화됨");
         }
-
         // Canvas의 Event Camera 설정
         if (mainCanvas != null)
         {
             mainCanvas.worldCamera = mainCamera;
             Debug.Log("Canvas의 Event Camera가 Main Camera로 설정되었습니다.");
+        }
+        if (battleCamera != null)
+        {
+            battleCamera.gameObject.SetActive(false);
+            Debug.Log("Battle Camera 비활성화됨");
         }
     }   
 
