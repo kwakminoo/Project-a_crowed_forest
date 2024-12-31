@@ -19,6 +19,7 @@ public class Player : MonoBehaviour
     [Header("Character Staytus")]
     public int maxHP = 100; //최대 체력
     public int currentHP; //현재 체력
+    public Image playerHPBar;
     public int level = 1; //플레이어 레벨
     public int experience = 0; // 경험치
     public  int experienceToNextLevel = 100; //레벨업까지 필요 경험치
@@ -91,15 +92,29 @@ public class Player : MonoBehaviour
         Debug.Log("Player 데이터가 Inventory에서 자동으로 동기화됐습니다");
     }
 
-    public void TakeDamage(int damge)
+    public void TakeDamage(int damage)
     {
-        currentHP -= damge;
-        Debug.Log($"레이븐이 {damge}의 데미지를 받았습니다");
+        currentHP = Mathf.Max(currentHP - damage, 0); // HP 감소, 최소값은 0
+        Debug.Log($"레이븐이 {damage}의 데미지를 받았습니다");
+
+        UpdateHPBar();
 
         if(currentHP <= 0)
         {
             Die();
         }
+    }
+
+    private void UpdateHPBar()
+    {
+        if (playerHPBar == null)
+        {
+            Debug.LogError("Player HPBar가 연결되지 않았습니다.");
+            return;
+        }
+
+        float hpRatio = Mathf.Clamp01((float)currentHP / maxHP); // HP 비율 계산
+        playerHPBar.fillAmount = hpRatio; // HPBar 길이 설정
     }
 
     public void AddExperience(int amount)
@@ -152,6 +167,7 @@ public class EnemyScript : MonoBehaviour
     public Image enemyImage;
     public int currentHP; //현재 체력
     public int maxHP;
+    public Image enemyHPBar;
     private Animator animator;
     
     private void Awake()
@@ -168,8 +184,20 @@ public class EnemyScript : MonoBehaviour
         enemyData = data;
         if (enemyData.skills != null)
         {
-            enemyData.skills = new List<Skill>(enemyData.skills); // 방어적 복사
-            enemyData.skills.RemoveAll(skill => skill == null || string.IsNullOrEmpty(skill.skillName));
+            // 방어적 복사
+            enemyData.skills = new List<Skill>(enemyData.skills);
+
+            // 유효하지 않은 스킬 제거
+            enemyData.skills.RemoveAll(skill =>
+            {
+                if (skill == null || string.IsNullOrEmpty(skill.skillName) || skill.successRate <= 0 || skill.damage <= 0 || skill.skillSprite == null)
+                {
+                    Debug.LogWarning($"유효하지 않은 스킬 제거: 이름={(skill?.skillName ?? "null")}, 성공률={(skill?.successRate ?? 0)}, 데미지={(skill?.damage ?? 0)}, 스프라이트={(skill?.skillSprite == null ? "null" : "존재")}");
+                    return true; // 제거
+                }
+                return false; // 유지
+            });
+
             foreach (var skill in enemyData.skills)
             {
                 Debug.Log($"적 스킬 초기화 확인: 이름={skill.skillName}, 성공률={skill.successRate}, 데미지={skill.damage}, 스프라이트={skill.skillSprite}");
@@ -180,7 +208,9 @@ public class EnemyScript : MonoBehaviour
             Debug.LogError("EnemyData.skills가 null입니다.");
         }
 
-        currentHP = data.maxHP;
+        enemyData = data;
+        maxHP = enemyData.maxHP;
+        currentHP = maxHP;
         Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
     }
 
@@ -201,16 +231,19 @@ public class EnemyScript : MonoBehaviour
             return;
         }
 
-        Debug.Log($"스킬 데이터 확인: 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
-
         Debug.Log($"{enemyData.enemyName}이(가) {selectedSkill.skillName}을 사용합니다");
+
+        BattleManager battleManager = FindObjectOfType<BattleManager>();
+        if (battleManager != null)
+        {
+            battleManager.HandleSkillCameraTransition(target, selectedSkill);
+        }
 
         if (enemyImage != null)
         {
             StartCoroutine(ChangeEnemyImage(selectedSkill.skillSprite, 1.0f));
         }
         ExecuteSkillRuntime(selectedSkill, target); // 런타임 데이터 기반 실행
-        Debug.Log($"스킬 데이터 확인 (실행 후): 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
     }
 
     private void ExecuteSkillRuntime(SkillRuntimeData skill, Player target)
@@ -270,20 +303,16 @@ public class EnemyScript : MonoBehaviour
             return null;
         }
 
-        Debug.Log("EnemyData.skills 상태 점검 (ChooseSkill 호출 전):");
-        foreach (var skill in enemyData.skills)
+        List<Skill> validSkills = enemyData.skills.FindAll(skill =>
         {
-            if (skill == null)
+            if (skill == null || string.IsNullOrEmpty(skill.skillName) || skill.successRate <= 0 || skill.damage <= 0 || skill.skillSprite == null)
             {
-                Debug.LogWarning("스킬이 null 상태입니다.");
+                Debug.LogWarning($"유효하지 않은 스킬이 필터링됨: 이름={(skill?.skillName ?? "null")}, 성공률={(skill?.successRate ?? 0)}, 데미지={(skill?.damage ?? 0)}, 스프라이트={(skill?.skillSprite == null ? "null" : "존재")}");
+                return false;
             }
-            else
-            {
-                Debug.Log($"스킬: 이름={skill.skillName}, 성공률={skill.successRate}, 데미지={skill.damage}, 스프라이트={skill.skillSprite}");
-            }
-        }
+            return true;
+        });
 
-        List<Skill> validSkills = enemyData.skills.FindAll(skill => skill != null);
         if (validSkills.Count == 0)
         {
             Debug.LogError($"{enemyData.enemyName}에게 유효한 스킬이 없습니다");
@@ -293,22 +322,39 @@ public class EnemyScript : MonoBehaviour
         int randomIndex = UnityEngine.Random.Range(0, validSkills.Count);
         Skill selectedSkill = validSkills[randomIndex];
 
-        Debug.Log($"선택된 스킬: 이름={selectedSkill.skillName}, 성공률={selectedSkill.successRate}, 데미지={selectedSkill.damage}, 스프라이트={selectedSkill.skillSprite}");
-
         return new SkillRuntimeData(selectedSkill.Clone());
     }
-
 
     //체력 변경 메소드
     public void TakeDamage(int damage)
     {
-        currentHP -= damage;
+        currentHP = Mathf.Max(currentHP - damage, 0); // HP 감소, 최소값은 0
         Debug.Log($"{enemyData.enemyName}이(가) {damage}의 데미지를 받았습니다");
+        if (enemyHPBar == null)
+        {
+            Debug.LogError("Enemy HPBar가 null입니다. 연결 상태를 확인하세요.");
+        }
+
+        UpdateHPBar();
 
         if(currentHP <= 0)
         {
             Die();
         }
+    }
+
+    private void UpdateHPBar()
+    {
+        if (enemyHPBar == null)
+        {
+            Debug.LogError("Enemy HPBar가 연결되지 않았습니다.");
+            return;
+        }
+
+        float hpRatio = Mathf.Clamp01((float)currentHP / maxHP); // HP 비율 계산
+        enemyHPBar.fillAmount = hpRatio; // HPBar 길이 설정
+        Debug.Log($"적 HPBar 업데이트됨: {hpRatio * 100}% (currentHP: {currentHP}, maxHP: {maxHP})");
+
     }
 
     public void Die()
