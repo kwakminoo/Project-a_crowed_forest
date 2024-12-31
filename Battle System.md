@@ -28,7 +28,9 @@ public class BattleManager : MonoBehaviour
     public List<Button> skillButtons;
     private Inventory inventory;
     public TextMeshProUGUI playerHPText;
+    public Image playerHPBar;
     public TextMeshProUGUI enemyHPText;
+    public Image enemyHPBar;
 
     private Canvas mainCanvas;
     public Camera mainCamera;
@@ -130,7 +132,6 @@ public class BattleManager : MonoBehaviour
         if(enemyData != null)
         {
             currentEnemy.InitializeEnemy(enemyData);
-            
             enemyNameText.text = enemyData.enemyName; //적 이름 설정
             enemyImage.sprite = enemyData.enemySprite; //적 이미지 설정
         }
@@ -362,7 +363,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    private void UpdateBattleState()
+    public void UpdateBattleState()
     {
         if(player == null)
         {
@@ -388,6 +389,22 @@ public class BattleManager : MonoBehaviour
         {
             Debug.LogError("enemyHPText가 설정되지 않았습니다");
         }
+
+        UpdateHPBar(player.currentHP, player.maxHP, playerHPBar);
+        UpdateHPBar(currentEnemy.currentHP, currentEnemy.maxHP, enemyHPBar);
+    }
+
+    private void UpdateHPBar(int currentHP, int maxHP, Image hpBar)
+    {
+        if (hpBar == null)
+        {
+            Debug.LogError("HP Bar가 연결되지 않았습니다. 현재 업데이트하려는 HP Bar가 null입니다.");
+            return;
+        }
+
+        float hpRatio = Mathf.Clamp01((float)currentHP / maxHP);
+        Debug.Log($"Enemy HPBar 업데이트: currentHP={currentHP}, maxHP={maxHP}, fillAmount={enemyHPBar.fillAmount}");
+        hpBar.fillAmount = hpRatio;
     }
 
     private void HandlePlayerDeath()
@@ -405,37 +422,6 @@ public class BattleManager : MonoBehaviour
     }
     
     //카메라 제어
-    private IEnumerator ShowActionWithCameraZoom(System.Action action)
-    {
-        float originalSize = mainCamera.orthographicSize;
-        float zoomedSize = originalSize * 2;
-        float duration = 0.5f; //카메라 확대 축소 시간
-        float elapsedTime = 0;
-
-        //카메라 확대
-        while(elapsedTime < duration)
-        {
-            mainCamera.orthographicSize = Mathf.Lerp(originalSize, zoomedSize, elapsedTime * duration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-
-        mainCamera.orthographicSize = zoomedSize;
-
-        action?.Invoke();
-        yield return new WaitForSecondsRealtime(1.0f);
-
-        //카메라 복원
-        elapsedTime = 0;
-        while(elapsedTime < duration)
-        {
-            mainCamera.orthographicSize = Mathf.Lerp(zoomedSize, originalSize, elapsedTime * duration);
-            elapsedTime += Time.deltaTime;
-            yield return null;
-        }
-        mainCamera.orthographicSize = originalSize;
-    }
-
     public void SwitchToBattleCamera()
     {
         if (battleCamera != null)
@@ -461,7 +447,6 @@ public class BattleManager : MonoBehaviour
             Debug.Log("Main Camera 비활성화됨");
         }
     }
-
 
     public void SwitchToMainCamera()
     {
