@@ -325,6 +325,7 @@ public class InventoryManager : MonoBehaviour
             );
         }
     }
+
     public void OpenWeaponWindow()
     {
         var weapons = inventory.GetItemsByType(ItemType.weapon);
@@ -339,12 +340,16 @@ public class InventoryManager : MonoBehaviour
 
     public void OpenTopWindow()
     {
+        var tops = inventory.GetItemsByType(ItemType.top);
+        Debug.Log($"상의 개수: {tops.Count}");
         List<Item> topItems = inventory.GetItemsByType(ItemType.top);
         OpenEquipmentWindow(selectedTop, topItems, item => EquipTop((Item)item), UnequipTop);
     }
 
     public void OpenBottomWindow()
     {
+        var bottoms = inventory.GetItemsByType(ItemType.bottom);
+        Debug.Log($"하의 개수: {bottoms.Count}");
         List<Item> bottomItems = inventory.GetItemsByType(ItemType.bottom);
         OpenEquipmentWindow(selectedBottom, bottomItems, item => EquipBottom((Item)item), UnequipBottom);
     }
