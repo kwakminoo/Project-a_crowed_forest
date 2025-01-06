@@ -73,11 +73,7 @@ public class CustomLineView : DialogueViewBase
             storyText = textObject.GetComponent<TextMeshProUGUI>();
             
         }
-        else
-        {
-            Debug.Log("기존 스토리 텍스트를 사용합니다.");
-            
-        }
+
         storyText.gameObject.SetActive(true);  // 비활성화된 경우 활성화
         storyText.text = line.TextWithoutCharacterName.Text;
         storyText.text = "";
@@ -170,7 +166,6 @@ public class CustomLineView : DialogueViewBase
         }
     }
 
-
     // 3. 선택지 버튼 생성 및 출력
     public override void RunOptions(DialogueOption[] options, System.Action<int> onOptionSelected)
     {
@@ -197,7 +192,6 @@ public class CustomLineView : DialogueViewBase
             rectTransfrom.localScale = Vector3.one;
 
             RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-            Debug.Log($"버튼 생성됨 {buttonObject.name}, 위치: {rectTransform.anchoredPosition}");
 
             TextMeshProUGUI buttonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
