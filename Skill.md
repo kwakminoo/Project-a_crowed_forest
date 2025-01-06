@@ -74,7 +74,6 @@ public class Skill : ScriptableObject, IItemData
         clonedSkill.skillType = skillType;
         clonedSkill.skillIcon = skillIcon;
         clonedSkill.skillSprite = skillSprite;
-        //clonedSkill.slowMotionDuration = slowMotionDuration;
         clonedSkill.skillEffect = skillEffect;
         clonedSkill.grantsTurnOnSuccess = grantsTurnOnSuccess;
         clonedSkill.damage = damage;
@@ -85,6 +84,7 @@ public class Skill : ScriptableObject, IItemData
         return clonedSkill;
     }
 }
+
 ~~~
 
 SkillRunTimeData
@@ -116,8 +116,6 @@ public class SkillRuntimeData
             return;
         }
 
-        Debug.Log($"SkillRuntimeData 생성 전 baseSkill 상태: 이름={baseSkill.skillName}, 성공률={baseSkill.successRate}, 데미지={baseSkill.damage}, 스프라이트={baseSkill.skillSprite}");
-
         skillName = baseSkill.skillName;
         skillOption = baseSkill.skillOption;
         skillType = baseSkill.skillType;
@@ -128,8 +126,6 @@ public class SkillRuntimeData
         defenseMultiplier = baseSkill.defenseMultiplier;
         successRate = baseSkill.successRate;
         counterAttackDamage = baseSkill.counterAttackDamage;
-
-        Debug.Log($"SkillRuntimeData 생성 완료: 이름={skillName}, 성공률={successRate}, 데미지={damage}, 스프라이트={skillSprite}");
     }
 }
 ~~~
