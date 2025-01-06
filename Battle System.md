@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using TMPro;
 using Yarn.Unity;
 using System;
+using Unity.VisualScripting;
 
 public class BattleManager : MonoBehaviour
 {
@@ -169,6 +170,7 @@ public class BattleManager : MonoBehaviour
 
             if(!isBattleActive) break;
 
+            //플레이어 턴
             yield return StartCoroutine(PlayerTurn());
         }
 
@@ -193,13 +195,13 @@ public class BattleManager : MonoBehaviour
 
         UpdateBattleState();
 
+        Debug.Log($"{currentEnemy.enemyData.enemyName}의 턴 종료");
+
         if(player.currentHP <= 0)
         {
             isBattleActive = false;
             EndBattle();
         }
-
-        yield return new WaitForSeconds(1f);
     }
 
     private IEnumerator PlayerTurn()
@@ -256,7 +258,7 @@ public class BattleManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("DialogueRunner가 실행 중이거나 노드가 설정되지 않았습니다.");
+                Debug.LogError("DialogueRunner가 실행 중이거나 노드가 설정되지 않았습니다.");
             }
         }
     }
@@ -403,7 +405,6 @@ public class BattleManager : MonoBehaviour
         }
 
         float hpRatio = Mathf.Clamp01((float)currentHP / maxHP);
-        Debug.Log($"Enemy HPBar 업데이트: currentHP={currentHP}, maxHP={maxHP}, fillAmount={enemyHPBar.fillAmount}");
         hpBar.fillAmount = hpRatio;
     }
 
@@ -427,7 +428,6 @@ public class BattleManager : MonoBehaviour
         if (battleCamera != null)
         {
             battleCamera.gameObject.SetActive(true);
-            Debug.Log("Battle Camera 렌더링 활성화됨");
         }
         else
         {
@@ -438,13 +438,11 @@ public class BattleManager : MonoBehaviour
         if (mainCanvas != null)
         {
             mainCanvas.worldCamera = battleCamera;
-            Debug.Log("Canvas의 Event Camera가 Battle Camera로 설정되었습니다.");
         }
 
         if (mainCamera != null)
         {
             mainCamera.gameObject.SetActive(false);
-            Debug.Log("Main Camera 비활성화됨");
         }
     }
 
@@ -453,18 +451,15 @@ public class BattleManager : MonoBehaviour
         if (mainCamera != null)
         {
             mainCamera.gameObject.SetActive(true);
-            Debug.Log("Main Camera 활성화됨");
         }
         // Canvas의 Event Camera 설정
         if (mainCanvas != null)
         {
             mainCanvas.worldCamera = mainCamera;
-            Debug.Log("Canvas의 Event Camera가 Main Camera로 설정되었습니다.");
         }
         if (battleCamera != null)
         {
             battleCamera.gameObject.SetActive(false);
-            Debug.Log("Battle Camera 비활성화됨");
         }
     }   
 
