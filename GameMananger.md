@@ -1,9 +1,24 @@
-게임메니저
+URPAssetCreater
 --------------
-1.게임메니저는 게임의 다양한 상태를 종합적으로 관리하는 오브젝트이다<br>
+~~~C#
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor;
+using UnityEngine.Rendering.Universal;
 
-난이도, 게임시작/종료, 
-
+public class URPAssetCreater
+{
+    [MenuItem("Asset/Create/Rendering/Universal Rendering Pipeline/Pipeline Asset")]
+    public static void CreateURPAssetM()
+    {
+        var pipelineAsset = ScriptableObject.CreateInstance<UniversalRenderPipelineAsset>();
+        AssetDatabase.CreateAsset(pipelineAsset, "Assets/Settings/URPAsset.asset");
+        AssetDatabase.SaveAssets();
+        Debug.Log("URP Asset 생성 완료!");
+    }
+}
+~~~
 상점페이지
 -
 * 1단계: 구매 UI 만들기
