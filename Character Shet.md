@@ -52,7 +52,6 @@ public class Player : MonoBehaviour
         if(Inventory.Instance != null)
         {
             Inventory.Instance.OnInventoryUpdated += UpdateFromInventory;
-            Debug.Log("Player가 Inventory 이벤트를 구독했습니다");
         }
         else
         {
@@ -84,12 +83,10 @@ public class Player : MonoBehaviour
         OnCharacterUpdated?.Invoke();
     }
 
-
     public void UpdateFromInventory()
     {
         equippedWeapon = Inventory.Instance.equippedWeapon;
         skillSlots = Inventory.Instance.skillSlots;
-        Debug.Log("Player 데이터가 Inventory에서 자동으로 동기화됐습니다");
     }
 
     public void TakeDamage(int damage)
@@ -192,16 +189,11 @@ public class EnemyScript : MonoBehaviour
             {
                 if (skill == null || string.IsNullOrEmpty(skill.skillName) || skill.successRate <= 0 || skill.damage <= 0 || skill.skillSprite == null)
                 {
-                    Debug.LogWarning($"유효하지 않은 스킬 제거: 이름={(skill?.skillName ?? "null")}, 성공률={(skill?.successRate ?? 0)}, 데미지={(skill?.damage ?? 0)}, 스프라이트={(skill?.skillSprite == null ? "null" : "존재")}");
+                    Debug.LogError($"유효하지 않은 스킬 제거: 이름={(skill?.skillName ?? "null")}, 성공률={(skill?.successRate ?? 0)}, 데미지={(skill?.damage ?? 0)}, 스프라이트={(skill?.skillSprite == null ? "null" : "존재")}");
                     return true; // 제거
                 }
                 return false; // 유지
             });
-
-            foreach (var skill in enemyData.skills)
-            {
-                Debug.Log($"적 스킬 초기화 확인: 이름={skill.skillName}, 성공률={skill.successRate}, 데미지={skill.damage}, 스프라이트={skill.skillSprite}");
-            }
         }
         else
         {
@@ -231,8 +223,6 @@ public class EnemyScript : MonoBehaviour
             return;
         }
 
-        Debug.Log($"{enemyData.enemyName}이(가) {selectedSkill.skillName}을 사용합니다");
-
         BattleManager battleManager = FindObjectOfType<BattleManager>();
         if (battleManager != null)
         {
@@ -254,7 +244,7 @@ public class EnemyScript : MonoBehaviour
             return;
         }
 
-        Debug.Log($"{skill.skillName} 실행 - 설정된 데미지: {skill.damage}");
+        Debug.Log($"{enemyData.enemyName}이(가) {skill.skillName} 실행 - 설정된 데미지: {skill.damage}");
 
         float roll = UnityEngine.Random.Range(0f, 1f);
         if (roll > skill.successRate)
@@ -265,7 +255,6 @@ public class EnemyScript : MonoBehaviour
 
         target.TakeDamage(skill.damage);
     }
-
 
     public IEnumerator ChangeEnemyImage(Sprite newSprite, float duration)
     {
@@ -353,8 +342,6 @@ public class EnemyScript : MonoBehaviour
 
         float hpRatio = Mathf.Clamp01((float)currentHP / maxHP); // HP 비율 계산
         enemyHPBar.fillAmount = hpRatio; // HPBar 길이 설정
-        Debug.Log($"적 HPBar 업데이트됨: {hpRatio * 100}% (currentHP: {currentHP}, maxHP: {maxHP})");
-
     }
 
     public void Die()
@@ -405,6 +392,7 @@ public class EnemyData : ScriptableObject
 ![레이븐 공격 모션](https://github.com/user-attachments/assets/1993016d-d481-48c1-b483-84f1d5183657)
 ![레이븐 공격준비](https://github.com/user-attachments/assets/81a65537-d5f0-4b86-bc7c-6ecb5c2d5beb)
 
+![Raven_TEST-Sheet-horizontal-sprites](https://github.com/user-attachments/assets/1ae22452-2e1e-4215-8771-9d0d5c8cdecd)
 
 황색 옷의 왕
 -
