@@ -673,7 +673,6 @@ public class EquipmentWindow : MonoBehaviour
     
     private void OnSlotClicked(IItemData itemData, System.Action<IItemData> onEquip, System.Action onUnequip)
     {
-        Debug.Log("슬롯 클릭: {itemData.GetName()}");
         ShowOptionWindow(itemData, onEquip, onUnequip);
     }
 
@@ -693,7 +692,7 @@ public class EquipmentWindow : MonoBehaviour
         equipButton.onClick.RemoveAllListeners();
         equipButton.onClick.AddListener(() =>
         {
-            Debug.Log($"{itemData.GetName()} 장착!");
+            Debug.Log($"{itemData.GetName()} 장착");
             HandleEquip(itemData); //타입에 따라 장착 처리
             OptionWindow.SetActive(false);
             DisableItemSkillWindow();
@@ -703,7 +702,7 @@ public class EquipmentWindow : MonoBehaviour
         unequipButton.onClick.RemoveAllListeners();
         unequipButton.onClick.AddListener(() =>
         {
-            Debug.Log($"{itemData.GetName()} 해제!");
+            Debug.Log($"{itemData.GetName()} 해제");
             onUnequip?.Invoke(); // InventoryManager에서 전달된 해제 메서드 호출
             OptionWindow.SetActive(false);
         });
