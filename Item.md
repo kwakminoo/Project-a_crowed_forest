@@ -72,8 +72,6 @@ public class Inventory : MonoBehaviour
         Debug.Log($"아이템 추가: {newItem.itemName}");
     }
 
-    
-
     public void RaiseInventoryUpdatedEnent()
     {
         OnInventoryUpdated?.Invoke();
@@ -171,18 +169,11 @@ public class Inventory : MonoBehaviour
 
     public void AssignSkillToSlot(Skill skill, int slotIndex)
     {
-        Debug.Log("AssignSkillToSlot 호출됨, slotIndex:" + slotIndex);
         if(slotIndex >= 0 && slotIndex < skillSlots.Count)
         {
             skillSlots[slotIndex] = skill;
             OnInventoryUpdated?.Invoke(); //데이터 변경 이벤트 발생
             Debug.Log((skill != null ? skill.skillName : "스킬 없슴") + "이(가) 슬롯" + slotIndex + "할당됐습니다");
-
-            for(int i = 0; i < skillSlots.Count; i ++)
-            {
-                Debug.Log("슬롯" + i + (skillSlots[i] != null ? skillSlots[i].skillName : "비어있습니다"));
-            }
-
             RaiseInventoryUpdatedEnent();
         }
         else
