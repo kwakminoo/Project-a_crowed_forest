@@ -391,6 +391,7 @@ public class EnemyData : ScriptableObject
 ![레이븐 회피 모션](https://github.com/user-attachments/assets/1957e8be-38be-4283-b2b6-0b3d18254b79)
 ![레이븐 공격 모션](https://github.com/user-attachments/assets/1993016d-d481-48c1-b483-84f1d5183657)
 ![레이븐 공격준비](https://github.com/user-attachments/assets/81a65537-d5f0-4b86-bc7c-6ecb5c2d5beb)
+![레이븐 걷기](https://github.com/user-attachments/assets/285cf75a-8efb-4aa6-b5c9-2038821e4dde)
 
 ![Raven_TEST-Sheet-horizontal-sprites](https://github.com/user-attachments/assets/1ae22452-2e1e-4215-8771-9d0d5c8cdecd)
 
