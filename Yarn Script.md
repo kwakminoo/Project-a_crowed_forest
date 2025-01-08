@@ -6,7 +6,9 @@ using UnityEngine.UI;
 using TMPro;
 using Yarn.Unity;
 using Yarn;
+using System;
 using System.Collections;
+using System.Linq;
 
 public class CustomLineView : DialogueViewBase
 {
@@ -17,9 +19,10 @@ public class CustomLineView : DialogueViewBase
     public ScrollRect scrollRect;   // 스크롤 가능한 영역
     private System.Action onDialogueLineFinishedCallBack;
 
-    public float typingSpeed = 0.05f;
-    private bool isTyping = false;
-    private string fullText;
+    public float typingSpeed = 0.05f; //텍스트 출력 속도
+    private bool isTyping = false; //텍스트 출력 중 여부
+    private string fullText; //출력할 전체 텍스트
+    private string currentTitle = ""; // 현재 타이틀 이름 저장
 
     void Start()
     {
@@ -39,12 +42,45 @@ public class CustomLineView : DialogueViewBase
     {
         onDialogueLineFinishedCallBack = onDialogueLineFinished;
 
+        if (IsNewTitle(line))
+        {
+            ClearContent();
+        }
+
+        //클릭시 텍스트 출력 완료 처리 
         scrollRect.GetComponent<Button>().onClick.RemoveAllListeners();
         scrollRect.GetComponent<Button>().onClick.AddListener(() => CompleteTyping());
 
 
-        //CreateCountinueButton(line, onDialogueLineFinished);
         StartCoroutine(TypeLine(line, onDialogueLineFinished));
+    }
+
+    private bool IsNewTitle(LocalizedLine line)
+    {
+        if (line.Metadata != null && line.Metadata.Contains("title")) // LINQ의 Contains 사용
+        {
+            int titleIndex = Array.IndexOf(line.Metadata, "title"); // "title"의 인덱스 찾기
+            if (titleIndex >= 0 && titleIndex + 1 < line.Metadata.Length)
+            {
+                string newTitle = line.Metadata[titleIndex + 1]; // "title" 키 다음 값 가져오기
+                if (newTitle != currentTitle)
+                {
+                    currentTitle = newTitle; // 새로운 타이틀로 업데이트
+                    return true;
+                }
+            }
+        }
+        return false; // 같은 타이틀로 판단
+    }
+        
+
+    private void ClearContent()
+    {
+        foreach (Transform child in contentParent)
+        {
+            Destroy(child.gameObject); // 모든 자식 오브젝트 삭제
+        }
+        Debug.Log("콘텐츠 초기화 완료");
     }
     
     // 1. 스토리 텍스트 출력
@@ -53,8 +89,9 @@ public class CustomLineView : DialogueViewBase
 
         isTyping = true;
         fullText = line.TextWithoutCharacterName.Text;
-        // ClearContent 호출을 하지 않음 -> 텍스트와 이미지를 지우지 않음
-        TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
+
+        GameObject newTextObject = Instantiate(textPrefab, contentParent);
+        TextMeshProUGUI storyText = newTextObject.GetComponent<TextMeshProUGUI>();
 
         foreach (Transform child in contentParent)
         {
@@ -65,19 +102,12 @@ public class CustomLineView : DialogueViewBase
             }
         }
 
-        // 텍스트 오브젝트가 없으면 생성
-        if (storyText == null)
-        {
-            Debug.Log("스토리 텍스트가 없으므로 새로 생성합니다.");
-            GameObject textObject = Instantiate(textPrefab, contentParent);
-            storyText = textObject.GetComponent<TextMeshProUGUI>();
-            
-        }
-
         storyText.gameObject.SetActive(true);  // 비활성화된 경우 활성화
         storyText.text = line.TextWithoutCharacterName.Text;
         storyText.text = "";
 
+
+        //한 글자씩 출력
         foreach(char latter in fullText.ToCharArray())
         {
             if(!isTyping) break;
@@ -85,6 +115,7 @@ public class CustomLineView : DialogueViewBase
             yield return new WaitForSeconds(typingSpeed);
         }
 
+        //텍스트 출력 완료
         isTyping = false;
         storyText.text = fullText;
         // 콜백 호출
@@ -181,6 +212,7 @@ public class CustomLineView : DialogueViewBase
             }
         }
 
+        //새로운 선택지 버튼 생성
         for (int i = 0; i < options.Length; i++)
         {
             int optionIndex = i;
@@ -205,24 +237,45 @@ public class CustomLineView : DialogueViewBase
 
             Button button = buttonObject.GetComponent<Button>();
             button.interactable = true; // 버튼 활성화
-            button.onClick.AddListener(() => {
+            button.onClick.AddListener(() => 
+            {
                 Debug.Log($"버튼 {optionIndex} 클릭됨");
                 button.interactable = false;  // 클릭 후 다시 선택되지 않도록 비활성화
-
-                foreach(Transform child in contentParent)
-                {
-                    if(child.GetComponent<Image>() != null)
-                    {
-                        Destroy(child.gameObject);
-                        Debug.Log("이미지 삭제");
-                    }
-                }
                 onOptionSelected(optionIndex);
-                
+
+                onOptionSelected(optionIndex);
+
+                // 선택지와 연결된 스토리 텍스트 추가
+                AddTextBelowOption(options[optionIndex].Line.Text.Text); // **올바른 텍스트 전달**
+        
             });
         }
-        ScrollToBottom();  // 스크롤을 하단으로 이동
+        ScrollToBottom();
     }
+
+    private void AddTextBelowOption(string text)
+    {
+        // 새로운 텍스트 프리팹 생성
+        GameObject newTextObject = Instantiate(textPrefab, contentParent);
+
+        // TextMeshProUGUI 컴포넌트를 가져옴
+        TextMeshProUGUI newText = newTextObject.GetComponent<TextMeshProUGUI>();
+        if (newText == null)
+        {
+            Debug.LogError("텍스트 프리팹에 TextMeshProUGUI 컴포넌트가 없습니다.");
+            return;
+        }
+
+        // 새로 생성한 텍스트 내용 설정
+        newText.text = text;
+
+        // 텍스트 오브젝트를 선택지 버튼 바로 아래로 이동
+        newTextObject.transform.SetSiblingIndex(contentParent.childCount);
+
+        // 스크롤을 하단으로 이동
+        ScrollToBottom();
+    }
+
 
     // 스크롤을 하단으로 이동시키는 함수
     private void ScrollToBottom()
