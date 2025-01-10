@@ -78,8 +78,27 @@ public class CustomLineView : DialogueViewBase
         isTyping = true;
         fullText = line.TextWithoutCharacterName.Text;
 
-        GameObject newTextObject = Instantiate(textPrefab, contentParent);
-        TextMeshProUGUI storyText = newTextObject.GetComponent<TextMeshProUGUI>();
+        // ContentParent에서 TextMeshProUGUI를 검색하거나 새로 생성
+        TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
+        if (storyText == null)
+        {
+            GameObject newTextObject = Instantiate(textPrefab, contentParent);
+            storyText = newTextObject.GetComponent<TextMeshProUGUI>();
+
+            // 기본값을 빈 문자열로 초기화
+            storyText.text = "";
+        }
+
+        // 기존 텍스트 가져오기
+        string existingText = storyText.text;
+
+        // 기존 텍스트가 있으면 줄바꿈 추가
+        if (!string.IsNullOrEmpty(existingText))
+        {
+            existingText += "\n";
+        }
+
+        storyText.text = existingText; // 기존 텍스트를 초기화
 
         foreach (Transform child in contentParent)
         {
@@ -89,11 +108,6 @@ public class CustomLineView : DialogueViewBase
                 child.gameObject.SetActive(false);
             }
         }
-
-        storyText.gameObject.SetActive(true);  // 비활성화된 경우 활성화
-        storyText.text = line.TextWithoutCharacterName.Text;
-        storyText.text = "";
-
 
         //한 글자씩 출력
         foreach(char latter in fullText.ToCharArray())
@@ -105,7 +119,7 @@ public class CustomLineView : DialogueViewBase
 
         //텍스트 출력 완료
         isTyping = false;
-        storyText.text = fullText;
+        storyText.text = existingText + fullText; 
 
         yield return StartCoroutine(WaitForUserInput());
 
