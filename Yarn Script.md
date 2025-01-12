@@ -78,17 +78,11 @@ public class CustomLineView : DialogueViewBase
         isTyping = true;
         fullText = line.TextWithoutCharacterName.Text;
 
-        // ContentParent에서 TextMeshProUGUI를 검색하거나 새로 생성
-        TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
-        if (storyText == null)
-        {
-            GameObject newTextObject = Instantiate(textPrefab, contentParent);
-            storyText = newTextObject.GetComponent<TextMeshProUGUI>();
-
-            // 기본값을 빈 문자열로 초기화
-            storyText.text = "";
-        }
-
+        // 새로운 텍스트 객체 생성
+        GameObject newTextObject = Instantiate(textPrefab, contentParent);
+        TextMeshProUGUI storyText = newTextObject.GetComponent<TextMeshProUGUI>();
+        storyText.text = "";
+        
         // 기존 텍스트 가져오기
         string existingText = storyText.text;
 
@@ -152,17 +146,35 @@ public class CustomLineView : DialogueViewBase
 
     private void CompleteTyping()
     {
+        // 텍스트 객체 가져오기
+        TextMeshProUGUI storyText = null;
+        if (contentParent.childCount > 0)
+        {
+            Transform lastChild = contentParent.GetChild(contentParent.childCount - 1);
+            storyText = lastChild.GetComponent<TextMeshProUGUI>();
+        }
+
+        // 텍스트 객체가 없으면 새로 생성
+        if (storyText == null)
+        {
+            GameObject newTextObject = Instantiate(textPrefab, contentParent);
+            storyText = newTextObject.GetComponent<TextMeshProUGUI>();
+            storyText.text = ""; // 초기화
+        }
+
         if (isTyping)
         {
+            // 텍스트 출력 중인 경우 즉시 완료
             isTyping = false;
-            TextMeshProUGUI storyText = contentParent.GetComponentInChildren<TextMeshProUGUI>();
             storyText.text = fullText;
         }
         else
         {
+            // 텍스트 출력이 완료되었을 경우 다음 동작 수행
             onDialogueLineFinishedCallBack?.Invoke();
         }
     }
+
 
     // 2. 이미지 출력 명령어 처리
     public void ShowImage(string imageName)
@@ -258,13 +270,12 @@ public class CustomLineView : DialogueViewBase
             {
                 Debug.Log($"버튼 {optionIndex} 클릭됨");
                 button.interactable = false;  // 클릭 후 다시 선택되지 않도록 비활성화
-                
 
                 // 선택지와 연결된 스토리 텍스트 추가
                 string connectedStoryText = GetConnectedStoryText(options[optionIndex]);
                 if (!string.IsNullOrEmpty(connectedStoryText))
                 {
-                    AddTextBelowOption(connectedStoryText);
+                    AddNewTextObject(connectedStoryText); // 새 텍스트 객체 생성
                 }
 
                 onOptionSelected(optionIndex); //선택지 처리  
@@ -302,7 +313,8 @@ public class CustomLineView : DialogueViewBase
         return string.Empty;
     }
 
-    private void AddTextBelowOption(string text)
+
+    private void AddNewTextObject(string text)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -310,11 +322,9 @@ public class CustomLineView : DialogueViewBase
             return;
         }
 
-        // 새로운 텍스트 프리팹 생성
         GameObject newTextObject = Instantiate(textPrefab, contentParent);
-
-        // TextMeshProUGUI 컴포넌트를 가져옴
         TextMeshProUGUI newText = newTextObject.GetComponent<TextMeshProUGUI>();
+
         if (newText == null)
         {
             Debug.LogError("텍스트 프리팹에 TextMeshProUGUI 컴포넌트가 없습니다.");
@@ -323,11 +333,11 @@ public class CustomLineView : DialogueViewBase
 
         newText.text = text;
 
-        // 텍스트 오브젝트를 contentParent의 마지막으로 이동
         newTextObject.transform.SetAsLastSibling();
 
-        ScrollToBottom(); // 스크롤을 하단으로 이동
+        ScrollToBottom();
     }
+
 
     // 스크롤을 하단으로 이동시키는 함수
     private void ScrollToBottom()
