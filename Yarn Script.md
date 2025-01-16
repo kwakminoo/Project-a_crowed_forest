@@ -74,63 +74,64 @@ public class CustomLineView : DialogueViewBase
     // 1. 스토리 텍스트 출력
     private IEnumerator TypeLine(LocalizedLine line, System.Action onDialogueLineFinished)
     {
-
-        isTyping = true;
+        isTyping = true; // 타이핑 상태 플래그 설정
         fullText = line.TextWithoutCharacterName.Text;
 
         // 새로운 텍스트 객체 생성
         GameObject newTextObject = Instantiate(textPrefab, contentParent);
         TextMeshProUGUI storyText = newTextObject.GetComponent<TextMeshProUGUI>();
         storyText.text = "";
-        
-        // 기존 텍스트 가져오기
-        string existingText = storyText.text;
 
-        // 기존 텍스트가 있으면 줄바꿈 추가
-        if (!string.IsNullOrEmpty(existingText))
+        string currentText = ""; // 현재 출력 중인 텍스트
+
+        // 텍스트 한 글자씩 출력
+        for (int i = 0; i < fullText.Length; i++)
         {
-            existingText += "\n";
-        }
+            if (!isTyping) break;
 
-        storyText.text = existingText; // 기존 텍스트를 초기화
-
-        foreach (Transform child in contentParent)
-        {
-            Button button = child.GetComponent<Button>();
-            if(button != null)
+            // <br> 태그 감지 및 줄바꿈 처리
+            if (fullText[i] == '<' && i + 3 < fullText.Length && fullText.Substring(i, 4) == "<br>")
             {
-                child.gameObject.SetActive(false);
+                currentText += "\n"; // 줄바꿈 추가
+                storyText.text = currentText; // 텍스트 업데이트
+                i += 3; // "<br>" 건너뛰기 (4글자 점프)
+                continue;
             }
-        }
 
-        //한 글자씩 출력
-        foreach(char latter in fullText.ToCharArray())
-        {
-            if(!isTyping) break;
-            storyText.text += latter;
+            // 한 글자씩 추가
+            currentText += fullText[i];
+            storyText.text = currentText;
+
+            // 스크롤을 맨 아래로 이동
+            ScrollToBottom();
+
             yield return new WaitForSeconds(typingSpeed);
         }
 
-        //텍스트 출력 완료
-        isTyping = false;
-        storyText.text = existingText + fullText; 
+        // 텍스트 출력 완료
+        isTyping = false; // 타이핑 상태 플래그 해제
+        storyText.text = fullText; // 최종 텍스트 설정
 
+        // 사용자 입력 대기
         yield return StartCoroutine(WaitForUserInput());
 
         // 콜백 호출
         onDialogueLineFinishedCallBack?.Invoke();
 
-        foreach(Transform child in contentParent)
+        // 선택지를 다시 활성화
+        foreach (Transform child in contentParent)
         {
             Button button = child.GetComponent<Button>();
-            if(button != null)
+            if (button != null)
             {
-                child.gameObject.SetActive(true);
+                child.gameObject.SetActive(true); // 버튼 다시 활성화
             }
         }
 
-        ScrollToBottom();  // 스크롤을 하단으로 이동
+        // 스크롤을 맨 아래로 이동
+        ScrollToBottom();
     }
+
 
     private IEnumerator WaitForUserInput()
     {
@@ -173,6 +174,7 @@ public class CustomLineView : DialogueViewBase
             // 텍스트 출력이 완료되었을 경우 다음 동작 수행
             onDialogueLineFinishedCallBack?.Invoke();
         }
+        ScrollToBottom();
     }
 
 
@@ -271,6 +273,9 @@ public class CustomLineView : DialogueViewBase
                 Debug.Log($"버튼 {optionIndex} 클릭됨");
                 button.interactable = false;  // 클릭 후 다시 선택되지 않도록 비활성화
 
+                // 선택지 버튼 비활성화
+                DisableAllButtons();
+
                 // 선택지와 연결된 스토리 텍스트 추가
                 string connectedStoryText = GetConnectedStoryText(options[optionIndex]);
                 if (!string.IsNullOrEmpty(connectedStoryText))
@@ -278,10 +283,7 @@ public class CustomLineView : DialogueViewBase
                     AddNewTextObject(connectedStoryText); // 새 텍스트 객체 생성
                 }
 
-                onOptionSelected(optionIndex); //선택지 처리  
-
-                // 선택지 버튼 비활성화
-                DisableAllButtons();  
+                onOptionSelected(optionIndex); //선택지 처리    
             });
 
             // 버튼을 텍스트 출력 아래로 이동
@@ -297,10 +299,12 @@ public class CustomLineView : DialogueViewBase
             Button button = child.GetComponent<Button>();
             if (button != null)
             {
-                button.interactable = false; // 모든 버튼 비활성화
+                button.interactable = false; // 버튼 비활성화
+                Destroy(button.gameObject); // 버튼 UI를 아예 삭제 (필요 시 주석 처리 가능)
             }
         }
     }
+
 
     private string GetConnectedStoryText(DialogueOption option)
     {
@@ -334,6 +338,7 @@ public class CustomLineView : DialogueViewBase
         newText.text = text;
 
         newTextObject.transform.SetAsLastSibling();
+        DisableAllButtons();
 
         ScrollToBottom();
     }
