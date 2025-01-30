@@ -50,7 +50,14 @@ public class Inventory : MonoBehaviour
 
     private void Start()
     {
-        skillSlots = new List<Skill>{null, null, null, null};
+        if (skillSlots.Count != 4)  
+        {
+            Debug.LogWarning($"⚠ skillSlots 개수 이상: 현재 {skillSlots.Count}개 -> 4개로 조정");
+            while (skillSlots.Count > 4)
+            {
+                skillSlots.RemoveAt(skillSlots.Count - 1);  // 4개 초과 슬롯 삭제
+            }
+        }
     }
 
     private void Awake()
@@ -189,7 +196,6 @@ public class Inventory : MonoBehaviour
 }
 ~~~
 
-
 Inventory Manager.cs
 -
 ~~~C#
@@ -247,6 +253,7 @@ public class InventoryManager : MonoBehaviour
     public void OpenInventory()
     {
         Debug.Log("Inventory가 열렸는습니다");
+        UpdateEquipmentImages();
         inventoryWindow.SetActive(true);
     }
 
@@ -263,6 +270,11 @@ public class InventoryManager : MonoBehaviour
         player = Player.Instance;
         Player.Instance.OnCharacterUpdated += UpdateEquipmentImages;
         UpdateEquipmentImages();
+
+        // 💡 인벤토리에서 저장된 무기 데이터를 가져와서 적용
+        selectedWeapon = inventory.equippedWeapon;
+        selectedTop = inventory.equippedTop;
+        selectedBottom = inventory.equippedBottom;
 
         if(player == null)
         {
@@ -361,39 +373,18 @@ public class InventoryManager : MonoBehaviour
             Debug.LogError("스킬 슬롯이 선택되지 않았습니다");
             return;
         }
-        
-        for(int i = 0; i < inventory.skillSlots.Count; i++)
+
+        // 기존 스킬을 찾아서 제거
+        for (int i = 0; i < inventory.skillSlots.Count; i++)
         {
-            if(inventory.skillSlots[i] == skill)
+            if (inventory.skillSlots[i] == skill)
             {
                 inventory.skillSlots[i] = null;
-
-                Transform iconTransform = skillSlots[i].transform.Find("Icon");
-                if(iconTransform != null)
-                {
-                    Image skillIcon = iconTransform.GetComponent<Image>();
-                    if(skillIcon != null)
-                    {
-                        skillIcon.sprite = null;
-                        skillIcon.enabled = false;
-                    }
-                }
                 break;
             }
         }
 
         inventory.AssignSkillToSlot(skill, selectedSkillSlotIndex);
-
-        Transform newIconTransform = skillSlots[selectedSkillSlotIndex].transform.Find("Icon");
-        if (newIconTransform != null)
-        {
-            Image skillIcon = newIconTransform.GetComponent<Image>();
-            if (skillIcon != null)
-            {
-                skillIcon.sprite = skill.skillIcon;
-                skillIcon.enabled = true;
-            }
-        }
         
         Debug.Log($"{skill.GetName()} 장착됨");
         UpdateEquipmentImages();
@@ -432,11 +423,13 @@ public class InventoryManager : MonoBehaviour
         selectedWeapon = weapon;
         inventory.EquipWeapon(weapon);
         Debug.Log($"{weapon.GetName()} 장착됨");
-        ClearSkillSlots();
+
+        ClearSkillSlots();  // ✅ 기존 슬롯 개수 유지하면서 초기화
+
+        UpdateEquipmentImages();  // ✅ UI 먼저 업데이트
+
         var weaponSkills = inventory.GetEquippedWeaponSkills();
-        UpdateSkillWindow(weaponSkills);
-        UpdateEquipmentImages();
-        
+        UpdateSkillWindow(weaponSkills);  // ✅ 기존 4개 슬롯만 활용하도록 수정
     }
 
     public void UnequipWeapon()
@@ -481,13 +474,18 @@ public class InventoryManager : MonoBehaviour
 
     public void ClearSkillSlots()
     {
-        foreach(var skillSlot in skillSlots)
+        for (int i = 0; i < 4; i++)  // ✅ 무조건 4개 슬롯만 유지
+        {
+            inventory.skillSlots[i] = null;  // 데이터 초기화
+        }
+
+        foreach (var skillSlot in skillSlots)
         {
             Transform iconTransform = skillSlot.transform.Find("Icon");
-            if(iconTransform == null) continue;
+            if (iconTransform == null) continue;
 
             Image skillIcon = iconTransform.GetComponent<Image>();
-            if(skillIcon != null)
+            if (skillIcon != null)
             {
                 skillIcon.sprite = null;
                 skillIcon.enabled = false;
@@ -495,21 +493,23 @@ public class InventoryManager : MonoBehaviour
             skillSlot.onClick.RemoveAllListeners();
         }
 
-        for(int i = 0; i < inventory.skillSlots.Count; i++)
-        {
-            inventory.skillSlots[i] = null;
-        }
+        Debug.Log("✅ 스킬 슬롯 초기화 완료 (UI 슬롯 개수 유지)");
     }
 
     public void UpdateSkillWindow(List<Skill> skills)
     {
         Debug.Log($"스킬 창에 {skills.Count}개의 스킬을 표시합니다.");
 
-        foreach (Skill skill in skills)
+        for (int i = 0; i < 4; i++)  // ✅ 무조건 4개 슬롯만 유지
         {
-            if (skill != null)
+            Transform iconTransform = skillSlots[i].transform.Find("Icon");
+            if (iconTransform == null) continue;
+
+            Image skillIcon = iconTransform.GetComponent<Image>();
+            if (skillIcon != null)
             {
-                Debug.Log($"스킬 창에 표시: {skill.skillName}");
+                skillIcon.sprite = (i < skills.Count) ? skills[i]?.skillIcon : null;
+                skillIcon.enabled = (i < skills.Count) && (skills[i] != null);
             }
         }
     }
@@ -526,7 +526,7 @@ public class InventoryManager : MonoBehaviour
         {
             weaponImage.sprite = selectedWeapon?.itemSprite;
             weaponImage.enabled = selectedWeapon != null;
-            weaponImage.gameObject.SetActive(true);
+            weaponImage.gameObject.SetActive(selectedWeapon != null); // null이면 비활성화
         }
         // 상의 슬롯 아이콘 업데이트
         UpdateSlotIconByName(topSlot.transform, "Icon", selectedTop?.itemIcon);
@@ -534,7 +534,7 @@ public class InventoryManager : MonoBehaviour
         {
             topImage.sprite = selectedTop?.itemSprite;
             topImage.enabled = selectedTop != null;
-            topImage.gameObject.SetActive(true);
+            topImage.gameObject.SetActive(selectedTop != null);
         }
         // 하의 슬롯 아이콘 업데이트
         UpdateSlotIconByName(bottomSlot.transform, "Icon", selectedBottom?.itemIcon);
@@ -542,7 +542,21 @@ public class InventoryManager : MonoBehaviour
         {
             bottomImage.sprite = selectedBottom?.itemSprite;
             bottomImage.enabled = selectedBottom != null;
-            bottomImage.gameObject.SetActive(true);
+            bottomImage.gameObject.SetActive(selectedBottom != null);
+        }
+
+        // 🔹 스킬 슬롯 업데이트 (💡 추가된 부분)
+        for (int i = 0; i < skillSlots.Count; i++)
+        {
+            Transform iconTransform = skillSlots[i].transform.Find("Icon");
+            if (iconTransform == null) continue;
+
+            Image skillIcon = iconTransform.GetComponent<Image>();
+            if (skillIcon != null)
+            {
+                skillIcon.sprite = inventory.skillSlots[i]?.skillIcon;  // 인벤토리의 스킬 아이콘을 가져옴
+                skillIcon.enabled = inventory.skillSlots[i] != null;  // 스킬이 없으면 비활성화
+            }
         }
 
         if(battleCharacterImage != null)
