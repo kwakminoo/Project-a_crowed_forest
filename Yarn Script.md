@@ -9,6 +9,7 @@ using Yarn;
 using System;
 using System.Collections;
 using System.Linq;
+using System.Collections.Generic;
 
 public class CustomLineView : DialogueViewBase
 {
@@ -25,6 +26,9 @@ public class CustomLineView : DialogueViewBase
     private string currentNodeName  = ""; // 현재 타이틀 이름 저장
     private DialogueRunner dialogueRunner; // DialogueRunner 참조
 
+    public AudioSource audioSource;  // ✅ 효과음 재생기 추가
+    public List<AudioClip> soundEffects;  // ✅ 효과음 목록
+
     void Start()
     {
         var dialogueRunner = FindObjectOfType<DialogueRunner>();
@@ -32,6 +36,8 @@ public class CustomLineView : DialogueViewBase
         {
             dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
             dialogueRunner.AddCommandHandler<string, string, string>("start_Battle", StartBattleCommand);
+            dialogueRunner.AddCommandHandler<string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
+
         }
         else
         {
@@ -305,7 +311,6 @@ public class CustomLineView : DialogueViewBase
         }
     }
 
-
     private string GetConnectedStoryText(DialogueOption option)
     {
         // Line.TextWithoutCharacterName가 유효한지 확인하고 텍스트를 반환합니다.
@@ -316,7 +321,6 @@ public class CustomLineView : DialogueViewBase
         }
         return string.Empty;
     }
-
 
     private void AddNewTextObject(string text)
     {
@@ -343,12 +347,27 @@ public class CustomLineView : DialogueViewBase
         ScrollToBottom();
     }
 
-
     // 스크롤을 하단으로 이동시키는 함수
     private void ScrollToBottom()
     {
         Canvas.ForceUpdateCanvases();  // 강제로 UI 업데이트
         scrollRect.verticalNormalizedPosition = 0f;  // 스크롤을 맨 아래로 이동
+    }
+
+    public void PlaySFX(string soundName)
+    {
+        // Resources 폴더에서 효과음 로드
+        AudioClip clip = Resources.Load<AudioClip>($"Audio/{soundName}");
+
+        if (clip != null)
+        {
+            audioSource.PlayOneShot(clip);
+            Debug.Log($"🔊 효과음 재생: {soundName}");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠ 효과음을 찾을 수 없습니다: {soundName}");
+        }
     }
 }
 ~~~
