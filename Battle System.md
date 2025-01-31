@@ -246,6 +246,14 @@ public class BattleManager : MonoBehaviour
         {
             Debug.Log($"player 승리");
         }
+
+        // ✅ 기존 BGM으로 복귀
+        var lineView = FindObjectOfType<CustomLineView>();
+        if (lineView != null)
+        {
+            lineView.RestorePreviousBGM(); // ✅ 전투 종료 후 원래 BGM 복귀
+        }
+        
         battleWindow.SetActive(false);
 
         // 스토리 출력 재개
