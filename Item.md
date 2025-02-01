@@ -73,10 +73,37 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    public void AddItem(Item newItem)
+    public void AddItemByName(string itemName, ItemType itemType)
     {
-        items.Add(newItem);
-        Debug.Log($"아이템 추가: {newItem.itemName}");
+        string folder = GetFolderByItemType(itemType);
+        string itemPath = $"Inventory/{folder}/{itemName}";  // ✅ 새로운 폴더 경로 반영
+
+        Item foundItem = Resources.Load<Item>(itemPath);
+
+        if (foundItem != null)
+        {
+            items.Add(foundItem);
+            Debug.Log($"🎁 아이템 획득: {foundItem.itemName} (경로: {itemPath})");
+            RaiseInventoryUpdatedEnent();
+        }
+        else
+        {
+            Debug.LogError($"❌ '{itemName}' 아이템을 찾을 수 없습니다. (경로: {itemPath})");
+        }
+    }
+
+    // ✅ 아이템 타입에 따라 올바른 폴더 경로 반환
+    private string GetFolderByItemType(ItemType itemType)
+    {
+        switch (itemType)
+        {
+            case ItemType.weapon: return "Weapon";
+            case ItemType.top: return "Top";
+            case ItemType.bottom: return "Bottom";
+            case ItemType.Consumable: return "Item";
+            case ItemType.key: return "Item";
+            default: return "Item";
+        }
     }
 
     public void RaiseInventoryUpdatedEnent()
@@ -210,17 +237,20 @@ public class InventoryManager : MonoBehaviour
 {
     [Header("UI Elements")]
     public GameObject inventoryWindow;
-    public GameObject equipmentWindowPrefab; // 장비창 프리펩
+    public GameObject equipmentWindowPrefab; // 창 프리펩
     public Transform uiParent; // 장비 창의 부모 UI 오브젝트
     public GameObject itemSlotPrefab; //아이템 슬롯 프리펩
     public GameObject skillSlotPrefab; //스킬 슬롯 프리펩
 
     [Header("Slot Buttons")]
+    public Button inventorySlot; //아이템 목록창
+    public Button itemSlot; //아이템 장착 칸
     public Button weaponSlot; // 무기 장착 칸
     public Button topSlot; // 상의 장착 칸
     public Button bottomSlot; // 하의 장착 칸
     public List<Button> skillSlots; // 스킬 슬롯 (4개)
 
+    private Item selectedItem; //선택된 아이템
     private Item selectedWeapon; // 선택된 무기
     private Item selectedTop; // 선택된 상의
     private Item selectedBottom; // 선택된 하의
@@ -275,6 +305,7 @@ public class InventoryManager : MonoBehaviour
         selectedWeapon = inventory.equippedWeapon;
         selectedTop = inventory.equippedTop;
         selectedBottom = inventory.equippedBottom;
+        //selectedItem = inventory.equippedItem;
 
         if(player == null)
         {
@@ -288,6 +319,10 @@ public class InventoryManager : MonoBehaviour
         topSlot.onClick.AddListener(OpenTopWindow);
         bottomSlot.onClick.RemoveAllListeners();
         bottomSlot.onClick.AddListener(OpenBottomWindow);
+        inventorySlot.onClick.RemoveAllListeners();
+        inventorySlot.onClick.AddListener(OpenBottomWindow);
+        itemSlot.onClick.RemoveAllListeners();
+        itemSlot.onClick.AddListener(OpenBottomWindow);
         
         for(int i = 0; i < skillSlots.Count; i++)
         {
@@ -296,6 +331,20 @@ public class InventoryManager : MonoBehaviour
             skillSlots[index].onClick.AddListener(() => OpenSkillWindow(index));
         }
         
+    }
+
+    public void OpenItemWindow()
+    {
+        List<Item> consumableItems = inventory.GetItemsByType(ItemType.Consumable);
+        List<Item> keyItems = inventory.GetItemsByType(ItemType.key);
+
+        Debug.Log($"소모품 개수: {consumableItems.Count}, 키아이템 개수: {keyItems.Count}");
+
+        List<Item> allItems = new List<Item>();
+        allItems.AddRange(consumableItems);  // ✅ 소모품 먼저 추가
+        allItems.AddRange(keyItems);         // ✅ 키 아이템 추가
+
+        OpenEquipmentWindow(null, allItems, null, null);
     }
 
     public void OpenSkillWindow(int slotIndex)
