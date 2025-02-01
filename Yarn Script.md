@@ -45,6 +45,7 @@ public class CustomLineView : DialogueViewBase
             dialogueRunner.AddCommandHandler<string>("change_bgm", ChangeBGM);  // ✅ BGM 변경 명령 추가
             dialogueRunner.AddCommandHandler<string>("play_bgm", PlayBGM);  // ✅ BGM 실행 명령 추가
             dialogueRunner.AddCommandHandler("stop_bgm", StopBGM);
+            dialogueRunner.AddCommandHandler<string, string>("give_item", GiveItemCommand);
         }
         else
         {
@@ -472,6 +473,22 @@ public class CustomLineView : DialogueViewBase
         {
             Debug.LogError($"❌ 효과음 로드 실패: {soundName} 🔎 확인할 것: Resources/Audio/Sound Effects/{soundName}.wav 또는 .mp3 파일 존재 여부");
         }
+    }
+
+    public void GiveItemCommand(string itemName, string itemType)
+    {
+        Debug.Log($"🎁 아이템 획득: {itemName} | 타입: {itemType}");
+
+        // ✅ 아이템 타입 변환
+        if (!System.Enum.TryParse(itemType, out ItemType type))
+        {
+            Debug.LogError($"❌ 잘못된 아이템 타입: {itemType}");
+            return;
+        }
+
+        // ✅ 아이템 추가
+        Inventory.Instance.AddItemByName(itemName, type);
+
     }
 
 }
