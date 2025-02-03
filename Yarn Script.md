@@ -46,6 +46,7 @@ public class CustomLineView : DialogueViewBase
             dialogueRunner.AddCommandHandler<string>("play_bgm", PlayBGM);  // ✅ BGM 실행 명령 추가
             dialogueRunner.AddCommandHandler("stop_bgm", StopBGM);
             dialogueRunner.AddCommandHandler<string, string>("give_item", GiveItemCommand);
+            dialogueRunner.AddFunction<string, bool>("ifhas", HasItemInInventory);
         }
         else
         {
@@ -489,6 +490,11 @@ public class CustomLineView : DialogueViewBase
         // ✅ 아이템 추가
         Inventory.Instance.AddItemByName(itemName, type);
 
+    }
+
+    public bool HasItemInInventory(string itemName)
+    {
+        return Inventory.Instance.items.Any(item => item.itemName == itemName);
     }
 
 }
