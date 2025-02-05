@@ -28,7 +28,8 @@ public class CustomLineView : DialogueViewBase
 
     public AudioSource audioSource;  // ✅ 효과음 재생기 추가
     public List<AudioClip> soundEffects;  // ✅ 효과음 목록
-    private Queue<(string sound, string triggerWord)> queuedSoundCommands = new Queue<(string, string)>(); // 🔹 효과음 + 트리거 단어 저장
+    private Queue<string> queuedSoundCommands = new Queue<string>(); 
+
 
     public AudioSource bgmSource;  // ✅ BGM을 재생할 AudioSource
     public string defaultBGM = "main_theme";  // ✅ 기본 BGM 이름 (게임이 시작될 때 실행될 BGM)
@@ -41,7 +42,7 @@ public class CustomLineView : DialogueViewBase
         {
             dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
             dialogueRunner.AddCommandHandler<string, string, string, string>("start_Battle", StartBattleCommand);
-            dialogueRunner.AddCommandHandler<string, string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
+            dialogueRunner.AddCommandHandler<string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
             dialogueRunner.AddCommandHandler<string>("change_bgm", ChangeBGM);  // ✅ BGM 변경 명령 추가
             dialogueRunner.AddCommandHandler<string>("play_bgm", PlayBGM);  // ✅ BGM 실행 명령 추가
             dialogueRunner.AddCommandHandler("stop_bgm", StopBGM);
@@ -70,23 +71,20 @@ public class CustomLineView : DialogueViewBase
 
         Debug.Log($"📢 RunLine 실행됨: {processedText}");  // ✅ RunLine 실행 확인
 
-        // 🔹 Yarn 명령어 감지 (예: `<<play_sfx "crow_caw" "까마귀">>`)
-        System.Text.RegularExpressions.Regex commandRegex = new System.Text.RegularExpressions.Regex(@"<<play_sfx\s+""(.+?)""\s+""(.+?)"">>");
+        System.Text.RegularExpressions.Regex commandRegex = new System.Text.RegularExpressions.Regex(@"<<play_sfx\s+""(.+?)"">>");
         var match = commandRegex.Match(processedText);
 
         while (match.Success)
         {
             string soundName = match.Groups[1].Value;  // 효과음 파일명
-            string triggerWord = match.Groups[2].Value; // 트리거 단어
 
-            Debug.Log($"✅ 효과음 명령 추가됨: {soundName}, 트리거 단어: {triggerWord}");
-            queuedSoundCommands.Enqueue((soundName, triggerWord)); // ✅ 큐에 저장
+            Debug.Log($"✅ 효과음 명령 추가됨: {soundName}");
+            queuedSoundCommands.Enqueue(soundName); // ✅ 트리거 단어 없이 저장
 
             // 🔹 Yarn 명령어 제거 후 텍스트 업데이트
             processedText = processedText.Replace(match.Value, "").Trim();
             match = commandRegex.Match(processedText);
         }
-
         // 💡 텍스트를 정상적으로 출력하도록 RunLine을 실행
         StartCoroutine(TypeLine(line, onDialogueLineFinished));
     }
@@ -189,26 +187,21 @@ public class CustomLineView : DialogueViewBase
 
             // 한 글자씩 추가
             currentText += fullText[i];
-            storyText.text = currentText;
-
-            // 🔹 특정 단어 등장 시 효과음 실행
-            foreach (var (soundName, triggerWord) in queuedSoundCommands.ToList())
-            {
-                if (currentText.Contains(triggerWord)) // ✅ 트리거 단어가 현재 출력된 텍스트에 포함되었을 때 실행
-                {
-                    Debug.Log($"🎯 트리거 단어 '{triggerWord}' 감지 → '{soundName}' 효과음 재생");
-                    PlaySFX(soundName, triggerWord);
-
-                    // ✅ 사용한 효과음 명령을 큐에서 제거
-                    queuedSoundCommands = new Queue<(string, string)>(queuedSoundCommands.Where(cmd => cmd.triggerWord != triggerWord));
-                }
-            }           
+            storyText.text = currentText;        
 
             // 스크롤을 맨 아래로 이동
             ScrollToBottom();
 
             yield return new WaitForSeconds(typingSpeed);
         }
+
+        while (queuedSoundCommands.Count > 0)
+        {
+            string soundName = queuedSoundCommands.Dequeue();
+            Debug.Log($"🎵 큐에서 꺼낸 효과음 재생: {soundName}");
+            PlaySFX(soundName);
+        }
+
 
         // 텍스트 출력 완료
         isTyping = false; // 타이핑 상태 플래그 해제
@@ -458,9 +451,9 @@ public class CustomLineView : DialogueViewBase
         scrollRect.verticalNormalizedPosition = 0f;  // 스크롤을 맨 아래로 이동
     }
 
-    public void PlaySFX(string soundName, string triggerWord)
+    public void PlaySFX(string soundName)
     {
-        Debug.Log($"🔍 PlaySFX 호출됨: {soundName}, 트리거 단어: {triggerWord}");  // ✅ 함수 호출 확인
+        Debug.Log($"🔍 PlaySFX 호출됨: {soundName}");  // ✅ 함수 호출 확인
 
         // Resources 폴더에서 효과음 로드
         AudioClip clip = Resources.Load<AudioClip>($"Audio/Sound Effects/{soundName}");
@@ -498,4 +491,5 @@ public class CustomLineView : DialogueViewBase
     }
 
 }
+
 ~~~
