@@ -200,7 +200,6 @@ public class EnemyScript : MonoBehaviour
             Debug.LogError("EnemyData.skills가 null입니다.");
         }
 
-        enemyData = data;
         maxHP = enemyData.maxHP;
         currentHP = maxHP;
         Debug.Log($"{enemyData.enemyName} 초기화 완료: 체력 {currentHP}/{enemyData.maxHP}");
