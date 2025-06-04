@@ -130,6 +130,14 @@ public class Inventory : MonoBehaviour
         Debug.Log(weapon.itemName + "을 장착했습니다. 할당된 스킬 수:" + equippedSkills.Count);
     }
 
+    public void UnequipWeapon(Item weapon) //선택한 무기를 해제
+    {
+        if(equippedWeapon == weapon)
+        {
+            equippedWeapon = null;
+        }
+    }
+
     public void EquipTop(Item top) //선택한 무기를 장착
     {
         equippedTop = top;
@@ -141,7 +149,10 @@ public class Inventory : MonoBehaviour
 
     public void UnequipTop()
     {
-
+        if(equippedTop == top)
+        {
+            equippedTop = null;
+        }
     }
 
     public void EquipBottom(Item bottom) //선택한 무기를 장착
@@ -155,13 +166,9 @@ public class Inventory : MonoBehaviour
 
     public void UnequipBottom()
     {
-        
-    }
-    public void UnequipWeapon(Item weapon) //선택한 무기를 해제
-    {
-        if(equippedWeapon == weapon)
+        if(equippedBottom == bottom)
         {
-            equippedWeapon = null;
+            equippedBottom = null;
         }
     }
 
