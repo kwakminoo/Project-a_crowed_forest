@@ -18,6 +18,8 @@ public class Skill : ScriptableObject, IItemData
     public string skillOption;              //스킬 설명
     public SkillType skillType;             //스킬 타입
     public Sprite skillIcon;                //스킬 아이콘
+
+    public Sprite motionSprite;            //스킬 공격 스프라이트
     public Sprite skillSprite;              //스킬 에니메이션
     public readonly float slowMotionDuration = 5.0f; //슬로우모션 지속 시간 
     public GameObject skillEffect;          //스킬 이펙트
