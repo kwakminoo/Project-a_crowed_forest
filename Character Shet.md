@@ -22,6 +22,8 @@ public class Player : MonoBehaviour
     public Image playerHPBar;
     public int level = 1; //플레이어 레벨
     public int experience = 0; // 경험치
+    public Dictionary<WeaponType, int> weaponProficiency = new(); // 무기 종류별 숙련도
+    public Dictionary<WeaponType, List<Skill>> unlockedSkills = new(); // 해금된 스킬
     public  int experienceToNextLevel = 100; //레벨업까지 필요 경험치
     public event Action OnPlayerDeath; //플레이어가 죽었을 때 이벤트
 
@@ -135,6 +137,57 @@ public class Player : MonoBehaviour
 
         Debug.Log($"레벨업! 현재 레벨: {level}, 최대 체력: {maxHP}");
     }
+
+    private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+    
+                foreach (WeaponType type in Enum.GetValues(typeof(WeaponType)))
+                {
+                    weaponProficiency[type] = 1;
+                    unlockedSkills[type] = new List<Skill>();
+                }
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
+    
+        public void UseWeapon()
+        {
+            if (equippedWeapon != null)
+            {
+                WeaponType type = equippedWeapon.weaponType;
+                AddProficiency(type, 10); // 사용 시 10 숙련도 경험치
+            }
+        }
+    
+        private void AddProficiency(WeaponType type, int amount)
+        {
+            weaponProficiency[type] += amount;
+    
+            // 해당 무기 종류의 모든 스킬 중 숙련도 조건을 만족하면 해금
+            foreach (Skill skill in equippedWeapon.assignedSkills)
+            {
+                if (weaponProficiency[type] >= skill.requiredProficiencyLevel &&
+                    !unlockedSkills[type].Contains(skill))
+                {
+                    unlockedSkills[type].Add(skill);
+                    Debug.Log($"{skill.skillName} 해금!");
+                }
+            }
+        }
+    
+        public List<Skill> GetUnlockedSkillsForEquippedWeapon()
+        {
+            if (equippedWeapon == null) return new List<Skill>();
+            return unlockedSkills[equippedWeapon.weaponType];
+        }
+        }
 
     private void Die()
     {
