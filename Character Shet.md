@@ -35,12 +35,19 @@ public class Player : MonoBehaviour
 
     public Inventory inventory;
     public event System.Action OnCharacterUpdated;
+
     private void Awake()
     {
-        if(Instance == null)
+        if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+    
+            foreach (WeaponType type in Enum.GetValues(typeof(WeaponType)))
+            {
+                weaponProficiency[type] = 1;
+                unlockedSkills[type] = new List<Skill>();
+            }
         }
         else
         {
@@ -127,36 +134,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void LevelUp()
-    {
-        experience -= experienceToNextLevel;
-        level++;
-        maxHP += 10; //최대 체력 증가
-        currentHP = maxHP; //체력 회복
-        experienceToNextLevel += 50; //레벨업마다 필요 경험치 증가
-
-        Debug.Log($"레벨업! 현재 레벨: {level}, 최대 체력: {maxHP}");
-    }
-
-    private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-    
-                foreach (WeaponType type in Enum.GetValues(typeof(WeaponType)))
-                {
-                    weaponProficiency[type] = 1;
-                    unlockedSkills[type] = new List<Skill>();
-                }
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
-    
         public void UseWeapon()
         {
             if (equippedWeapon != null)
@@ -179,6 +156,7 @@ public class Player : MonoBehaviour
                     unlockedSkills[type].Add(skill);
                     Debug.Log($"{skill.skillName} 해금!");
                 }
+                if (equippedWeapon == null || equippedWeapon.assignedSkills == null) return;
             }
         }
     
