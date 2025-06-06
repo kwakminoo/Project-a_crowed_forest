@@ -41,7 +41,7 @@ public class CustomLineView : DialogueViewBase
         if(dialogueRunner != null)
         {
             dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-            dialogueRunner.AddCommandHandler<string, string, string, string>("start_Battle", StartBattleCommand);
+            dialogueRunner.AddCommandHandler<string, string, string, string, string>("start_Battle", StartBattleCommand);
             dialogueRunner.AddCommandHandler<string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
             dialogueRunner.AddCommandHandler<string>("change_bgm", ChangeBGM);  // ✅ BGM 변경 명령 추가
             dialogueRunner.AddCommandHandler<string>("play_bgm", PlayBGM);  // ✅ BGM 실행 명령 추가
@@ -295,7 +295,7 @@ public class CustomLineView : DialogueViewBase
         imageObject.transform.SetAsFirstSibling();
     }
 
-    public void StartBattleCommand(string enemyDataName, string backGroundName, string battleBGM, string nextYarnNode)
+    public void StartBattleCommand(string enemyDataName, string backGroundName, string battleBGM, string nextYarnNode, string firstTurn)
     {
         EnemyData enemyData = Resources.Load<EnemyData>($"Character/{enemyDataName}");
         Debug.Log($"로드 시도: Resources/Character/{enemyDataName}");
@@ -322,8 +322,11 @@ public class CustomLineView : DialogueViewBase
             {
                 PlayBGM("battle_theme");  // ✅ 기본 전투 BGM 사용
             }
+            //첫 번째 턴 정하기
+            bool playerStarts = firstTurn.ToLower() == "player";
+
             //적 데이터 전달
-            BattleManager.StartBattle(enemyData, backGroundName, nextYarnNode);
+            BattleManager.StartBattle(enemyData, backGroundName, nextYarnNode, playerStarts);
         }
         else
         {
