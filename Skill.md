@@ -31,6 +31,8 @@ public class Skill : ScriptableObject, IItemData
     public float successRate;               //성공 확률(회피나 패링 등)
     public float counterAttackDamage;       //카운터 데미지
 
+    public int requiredProficiencyLevel; // 숙련도 필요 레벨
+
     public Sprite GetIcon() => skillIcon;
     public string GetName() => skillName;
     public string GetOption() => skillOption;
