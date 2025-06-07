@@ -41,7 +41,7 @@ public class CustomLineView : DialogueViewBase
         if(dialogueRunner != null)
         {
             dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-            dialogueRunner.AddCommandHandler<string, string, string, string, string>("start_Battle", StartBattleCommand);
+            dialogueRunner.AddCommandHandler<string, string, string, string, string, stirng>("start_Battle", StartBattleCommand);
             dialogueRunner.AddCommandHandler<string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
             dialogueRunner.AddCommandHandler<string>("change_bgm", ChangeBGM);  // ✅ BGM 변경 명령 추가
             dialogueRunner.AddCommandHandler<string>("play_bgm", PlayBGM);  // ✅ BGM 실행 명령 추가
@@ -295,7 +295,7 @@ public class CustomLineView : DialogueViewBase
         imageObject.transform.SetAsFirstSibling();
     }
 
-    public void StartBattleCommand(string enemyDataName, string backGroundName, string battleBGM, string nextYarnNode, string firstTurn)
+    public void StartBattleCommand(string enemyDataName, string backGroundName, string battleBGM, string nextYarnNode, string firstTurn, string rewardList = "")
     {
         EnemyData enemyData = Resources.Load<EnemyData>($"Character/{enemyDataName}");
         Debug.Log($"로드 시도: Resources/Character/{enemyDataName}");
@@ -307,6 +307,21 @@ public class CustomLineView : DialogueViewBase
         {
             Debug.LogError($"Resources/Character/{enemyDataName}.asset의 데이터를 찾을 수 없습니다");
             return;
+        }
+
+        List<Item> battleRewards = new();
+    
+        if (!string.IsNullOrEmpty(rewardList) && rewardList.ToLower() != "none")
+        {
+            string[] rewardNames = rewardList.Split(',');
+            foreach (string rewardName in rewardNames)
+            {
+                Item reward = Resources.Load<Item>($"Items/{rewardName.Trim()}");
+                if (reward != null)
+                    battleRewards.Add(reward);
+                else
+                    Debug.LogWarning($"보상 아이템 '{rewardName}'을 찾을 수 없습니다.");
+            }
         }
 
         var BattleManager = FindObjectOfType<BattleManager>();
@@ -326,7 +341,7 @@ public class CustomLineView : DialogueViewBase
             bool playerStarts = firstTurn.ToLower() == "player";
 
             //적 데이터 전달
-            BattleManager.StartBattle(enemyData, backGroundName, nextYarnNode, playerStarts);
+            BattleManager.StartBattle(enemyData, backGroundName, nextYarnNode, playerStarts, battleRewards);
         }
         else
         {
