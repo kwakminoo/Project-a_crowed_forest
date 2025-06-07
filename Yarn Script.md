@@ -309,20 +309,36 @@ public class CustomLineView : DialogueViewBase
             return;
         }
 
-        List<Item> battleRewards = new();
-    
+        List<Item> battleItemRewards = new();
+        List<Skill> battleSkillRewards = new();
+        
         if (!string.IsNullOrEmpty(rewardList) && rewardList.ToLower() != "none")
         {
             string[] rewardNames = rewardList.Split(',');
             foreach (string rewardName in rewardNames)
             {
-                Item reward = Resources.Load<Item>($"Items/{rewardName.Trim()}");
-                if (reward != null)
-                    battleRewards.Add(reward);
-                else
-                    Debug.LogWarning($"보상 아이템 '{rewardName}'을 찾을 수 없습니다.");
+                string trimmedName = rewardName.Trim();
+        
+                // 먼저 아이템으로 시도
+                Item itemReward = Resources.Load<Item>($"Items/{trimmedName}");
+                if (itemReward != null)
+                {
+                    battleItemRewards.Add(itemReward);
+                    continue;
+                }
+        
+                // 아이템이 아니라면 스킬로 시도
+                Skill skillReward = Resources.Load<Skill>($"Skills/{trimmedName}");
+                if (skillReward != null)
+                {
+                    battleSkillRewards.Add(skillReward);
+                    continue;
+                }
+        
+                Debug.LogWarning($"보상 '{trimmedName}'을 Item 또는 Skill에서 찾을 수 없습니다.");
             }
         }
+
 
         var BattleManager = FindObjectOfType<BattleManager>();
         if(BattleManager != null)
