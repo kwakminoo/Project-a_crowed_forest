@@ -38,6 +38,7 @@ public class BattleManager : MonoBehaviour
     public Camera battleCamera;
 
     private bool isBattleActive = true;
+    private List<Item> victoryRewards = new();
 
     public DialogueRunner dialogueRunner;
     private string nextNode;
@@ -110,7 +111,7 @@ public class BattleManager : MonoBehaviour
         } 
     }
 
-    public void StartBattle(EnemyData enemyData, string backGroundName, string nextYarnNode)
+    public void StartBattle(EnemyData enemyData, string backGroundName, string nextYarnNode, bool playerStarts, List<Item> battleRewards)
     {
         if (dialogueRunner != null)
         {
@@ -122,6 +123,8 @@ public class BattleManager : MonoBehaviour
 
             nextNode = nextYarnNode; // 다음 노드 저장
         }
+
+        victoryRewards = battleRewards;
 
         currentEnemy = enemyObject.GetComponent<EnemyScript>();
         if (currentEnemy == null)
