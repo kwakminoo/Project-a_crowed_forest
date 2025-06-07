@@ -111,7 +111,7 @@ public class BattleManager : MonoBehaviour
         } 
     }
 
-    public void StartBattle(EnemyData enemyData, string backGroundName, string nextYarnNode, bool playerStarts, List<Item> battleRewards)
+    public void StartBattle(EnemyData enemyData, string backGroundName, string nextYarnNode, bool playerStarts, List<Item> battleRewards, List<Skill> skillRewards)
     {
         if (dialogueRunner != null)
         {
