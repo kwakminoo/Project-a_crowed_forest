@@ -90,24 +90,92 @@
 
 ## 🧱 구조 및 Hierarchy (Unity)
 
-```plaintext
-Main Camera
-├── Dialogue
+```Hierarchy
+
+Main Camara
+    Dialogue
 ├── Canvas
-│   ├── CustomLineView
-│   │   └── Scrollbar > Viewport > Content
-│   │       └── StoryText / Button
-│   ├── BattleView
-│   │   └── BattleWindow
-│   │       └── EnemyObject (EnemyScript)
-│   │       └── PlayerObject
-│   │           └── SkillButtons (4개 버튼)
-│   ├── UIView
-│   │   └── InventoryView
-│   │       └── SkillSlot (4개)
-│   │       └── EquipmentSlot (Weapon, Top, Bottom)
-│   │       └── EquipmentWindowPrefab
-│   │       └── OptionWindow (장비 정보 표시)
+│   ├── CustomLineView(Custem Line View 스크립트)
+│   │   ├── Scrollbar
+│   │   │   ├── Viewport
+│   │   │   │   ├── Content
+│   │   │   │   │   ├── StoryText(Prefab)
+│   │   │   │   │   └── Button(Prefab)
+│   │   │   │   │       └── Text
+│   │   │   └── SlidingArea
+│   │   │       └── Handle
+│   │   ├── BattleView(Battle Manager 스크립트)
+│   │   │   ├── BattleWindow
+│   │   │   │   ├── Background
+│   │   │   │   ├── EnemyObject(Enemy Scrpit 스크립트)
+│   │   │   │   │   ├── Enemy (Image)
+│   │   │   │   │   ├── EnemyHP
+│   │   │   │   │   │   ├── EnemyHPBar
+│   │   │   │   │   │   └── EnemyHPText
+│   │   │   │   │   ├── EnemyName (Image)
+│   │   │   │   │   │   └── Text
+│   │   │   │   ├── PlayerObject
+│   │   │   │   │   ├── Raven (Image)
+│   │   │   │   │   ├── PlayerHP
+│   │   │   │   │   │   ├── HPBar
+│   │   │   │   │   │   └── HPText
+│   │   │   │   │   ├── PlayerSanity
+│   │   │   │   │   │   ├── SanityBar
+│   │   │   │   │   │   └── SanityText
+│   │   │   │   │   └── SkillButtons
+│   │   │   │   │       ├── SkillButton1Add commentMore actions
+│   │   │   │   │       │   └── Image
+│   │   │   │   │       ├── SkillButton2
+│   │   │   │   │       │   └── Image
+│   │   │   │   │       ├── SkillButton3
+│   │   │   │   │       │   └── Image
+│   │   │   │   │       └── SkillButton4
+│   │   │   │   │           └── Image
+│   │   ├── UIView
+│   │   │   ├── HPBar
+│   │   │   ├── HPFrameBar
+│   │   │   ├── SanityBar
+│   │   │   ├── SanityFrameBar
+│   │   │   ├── StoryTopBar
+│   │   │   ├── StoryBar
+│   │   │   ├── Background
+│   │   │   ├── InventoryView(Inventory, Inventory Manager, Player 스크립트)
+│   │   │   │   ├── InventoryWindow
+│   │   │   │   │   ├── RavenDrake (PlayerCharacter Image)
+│   │   │   │   │   ├── XButton
+│   │   │   │   │   ├── SkillSlot
+│   │   │   │   │   │   ├── SkillButton1
+│   │   │   │   │   │   │   └── Image
+│   │   │   │   │   │   ├── SkillButton2
+│   │   │   │   │   │   │   └── Image
+│   │   │   │   │   │   ├── SkillButton3
+│   │   │   │   │   │   │   └── Image
+│   │   │   │   │   │   └── SkillButton4
+│   │   │   │   │   │       └── Image
+│   │   │   │   │   ├── WeaponSlot
+│   │   │   │   │   │   └── Image
+│   │   │   │   │   ├── TopSlot
+│   │   │   │   │   │   └── Image
+│   │   │   │   │   ├── BottomSlot
+│   │   │   │   │   │   └── Image
+│   │   │   │   │   ├── WeaponItemWindow
+│   │   │   │   │   │   ├── XButton
+│   │   │   │   │   │   ├── ScrollView
+│   │   │   │   │   │   │   ├── Content
+│   │   │   │   │   │   │   │   └── WeaponSlotPrefab
+│   │   │   │   │   │   │   └── ScrollbarVertical
+│   │   │   │   │   │   └── EquipmentWindowPrefab (GameObject)
+│   │   │   │   │   │   │   ├── ScrollView (GameObject)
+│   │   │   │   │   │   │   │   ├── Viewport (Mask Component)
+│   │   │   │   │   │   │   │   │   └── Content (GameObject) ← 아이템/스킬 슬롯 프리팹이 동적으로 생성됨
+│   │   │   │   │   │   │   │   │   │   └── Slot(Prefabs)
+│   │   │   │   │   │   │   ├── OptionWindow (GameObject)
+│   │   │   │   │   │   │   │   ├── XButton (Button) ← 창 닫기 버튼
+│   │   │   │   │   │   │   │   ├── Icon (Image) ← 선택한 아이템/스킬의 아이콘
+│   │   │   │   │   │   │   │   ├── Name (TextMeshProUGUI) ← 선택한 아이템/스킬의 이름
+│   │   │   │   │   │   │   │   ├── Description (TextMeshProUGUI) ← 선택한 아이템/스킬의 설명
+│   │   │   │   │   │   │   │   ├── EquipButton (Button) ← 장착 버튼
+│   │   │   │   │   │   │   │   └── UnequipButton (Button) ← 해제 버튼
 
 피드백
 -
