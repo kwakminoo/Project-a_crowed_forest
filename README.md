@@ -64,6 +64,8 @@
 - 노드 기반 시각적 맵 UI (탐험형)
 - 각 노드마다 전투/대화/스토리 이벤트 연동 가능
 - 조건부 이동, 탐색 제한 설정 가능 (예: 열쇠 필요, 시간 경과 등)
+- https://www.youtube.com/watch?v=Z1UdjLq_Xz0
+- https://www.youtube.com/watch?v=H-7xrJ2dZEg
 
 ---
 
