@@ -1,4 +1,4 @@
-# 🌲 Project: A Crowed Forest
+# Project: A Crowed Forest
 
 > 기억하자. **코딩은 AI가 더 잘하지만**, **생각은 내가 더 잘한다**  
 > 📌 _내가 옳다_
