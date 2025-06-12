@@ -28,7 +28,7 @@
 
 - 플레이어 스탯: 체력, 정신력, 근력, 기량, 운
 - 정신력이 일정 이하일 경우 무작위 붕괴 상태 진입
-  - 공포, 분노, 광기, 이상향, 고통은 나를 강하게 만들 뿐 등 5가지 변이
+- 공포, 분노, 광기, 이상향, 고통은 나를 강하게 만들 뿐 등 5가지 변이
 - 각 붕괴 상태에 따라 전투 중 다양한 효과 발생
 
 ### 🧬 특성 시스템
@@ -52,6 +52,14 @@
 | 썩은 부싯가루 | **독성** 속성 부여 |
 | 붉은 부싯가루 | **출혈** 속성 부여 |
 | 슬럼 캔디 | HP 회복 + 미세한 **독성** 부작용
+
+- https://assetstore.unity.com/packages/vfx/particles/particle-pack-127325?srsltid=AfmBOoqxGBf_4vt-51eU1MJegzM7KCqdwXpLvhdM3u7hibVOupkbvGF1&utm_source=chatgpt.com
+- https://assetstore.unity.com/top-assets/top-free?srsltid=AfmBOoq6mfkimKmsIj0-Hsce_0O4rmym63Yiwtb9gVdrbqy9IL06QEtO&utm_source=chatgpt.com
+- https://itch.io/game-assets/tag-particles/tag-unity?utm_source=chatgpt.com
+- https://assetstore.unity.com/packages/vfx/particles/skills-particle-vfx-pack-lightning-76111?srsltid=AfmBOoqQCKBAw9dkFsowDkrtjvntjyqGAzJ4RyZVycIUUTERnpeq9Hiw&utm_source=chatgpt.com
+- https://assetstore.unity.com/packages/vfx/particles/fire-explosions/free-fire-vfx-urp-266226
+- https://assetstore.unity.com/packages/3d/environments/lowpoly-environment-nature-free-medieval-fantasy-series-187052
+- https://assetstore.unity.com/packages/3d/environments/unity-terrain-urp-demo-scene-213197
 
 ### 🎁 보상 시스템
 
