@@ -77,6 +77,18 @@
 
 ---
 
+## 🧵 Yarn Spinner 커맨드 확장
+
+- 전투 시작 커맨드에 보상 아이템/스킬 지정 가능
+- 숙련도 조건 충족 시 해금된 스킬도 보상 UI에 병합
+- `StartBattleCommand(...)`에 다음 인자 포함:
+  - enemyDataName
+  - backGroundName
+  - battleBGM
+  - nextYarnNode
+  - firstTurn
+  - rewardList (아이템/스킬 이름)
+
 ## 📜 예정 기능
 
 - 전투 내 아이템 사용 구현
