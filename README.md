@@ -5,6 +5,12 @@
 
 ---
 
+## 📝 Twine (군대에서 스토리 정리 도구)
+
+- Twine을 통해 스토리 분기 구조를 시각화 및 정리
+- 작성 내용은 Yarn 코드로 변환하거나 참고용으로 활용 가능
+- 설치: [https://twinery.org/](https://twinery.org/)
+
 ## 📚 Useful Links
 
 - [ChatGPT](https://chatgpt.com/gpts) — AI 도움 받기
