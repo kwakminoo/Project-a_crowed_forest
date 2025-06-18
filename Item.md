@@ -370,6 +370,19 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
+    public void RemoveItemFromAllSlots(Item targetItem)
+    {
+        for (int i = 0; i < inventory.consumableItemSlots.Count; i++)
+        {
+            if (inventory.consumableItemSlots[i] == targetItem)
+            {
+                inventory.consumableItemSlots[i] = null;
+            }
+        }
+
+        UpdateEquipmentImages(); // UI 갱신
+    }
+
     public void OpenItemWindow()
     {
         List<Item> allItems = inventory.items; // 모든 아이템 보여주기
@@ -379,10 +392,11 @@ public class InventoryManager : MonoBehaviour
             null,
             allItems,
             null,
-            null
+            null,
+            itemSlotPrefab,
+            EquipmentWindowMode.InventoryView // ✅ 인벤토리 모드
         );
     }
-
 
     public void OpenSkillWindow(int slotIndex)
     {
@@ -394,11 +408,13 @@ public class InventoryManager : MonoBehaviour
         GameObject skillSlot = Instantiate(skillSlotPrefab, uiParent);
         Debug.Log($"스킬 슬롯 {slotIndex} 클릭. {availableSkills.Count}개의 스킬이 사용 가능.");
 
-        OpenEquipmentWindow<Skill>(
+        OpenEquipmentWindow(
             currentSkill,
             availableSkills,
             skill => EquipSkill((Skill)skill),
-            UnequipSkill
+            UnequipSkill,
+            skillSlotPrefab,
+            EquipmentWindowMode.SlotEquip
         );
     }
 
@@ -408,7 +424,6 @@ public class InventoryManager : MonoBehaviour
 
         Item currentItem = inventory.consumableItemSlots[slotIndex];
 
-        // 소비 + 키 아이템만 필터링
         List<Item> availableItems = inventory.items.FindAll(item =>
             item.itemType == ItemType.Consumable || item.itemType == ItemType.key
         );
@@ -417,7 +432,9 @@ public class InventoryManager : MonoBehaviour
             currentItem,
             availableItems,
             item => EquipItemToSlot((Item)item),
-            UnequipItemFromSlot
+            UnequipItemFromSlot,
+            itemSlotPrefab,
+            EquipmentWindowMode.SlotEquip // ✅ 장착 모드
         );
     }
 
@@ -451,8 +468,14 @@ public class InventoryManager : MonoBehaviour
         
     }
 
-
-    public void OpenEquipmentWindow<T>(T currentItem, List<T> items, System.Action<IItemData> onEquip, System.Action onUnequip)
+    public void OpenEquipmentWindow<T>(
+        T currentItem,
+        List<T> items,
+        System.Action<IItemData> onEquip,
+        System.Action onUnequip,
+        GameObject slotPrefab,
+        EquipmentWindowMode mode // ✅ 추가된 모드 인자
+    )
     {
         foreach (Transform child in uiParent)
         {
@@ -469,7 +492,8 @@ public class InventoryManager : MonoBehaviour
                 items,
                 onEquip,
                 onUnequip,
-                itemSlotPrefab
+                slotPrefab,
+                mode // ✅ 추가된 인자 전달
             );
         }
     }
@@ -480,10 +504,13 @@ public class InventoryManager : MonoBehaviour
         Debug.Log($"무기 개수: {weapons.Count}");
         List<Item> weaponItems = inventory.GetItemsByType(ItemType.weapon);
         OpenEquipmentWindow(
-            selectedWeapon, 
-            weaponItems, 
-            item => EquipWeapon((Item)item), 
-            UnequipWeapon);
+            selectedWeapon,
+            weaponItems,
+            item => EquipWeapon((Item)item),
+            UnequipWeapon,
+            itemSlotPrefab,
+            EquipmentWindowMode.SlotEquip // 무기 장착은 장비 슬롯
+        );
     }
 
     public void OpenTopWindow()
@@ -491,7 +518,14 @@ public class InventoryManager : MonoBehaviour
         var tops = inventory.GetItemsByType(ItemType.top);
         Debug.Log($"상의 개수: {tops.Count}");
         List<Item> topItems = inventory.GetItemsByType(ItemType.top);
-        OpenEquipmentWindow(selectedTop, topItems, item => EquipTop((Item)item), UnequipTop);
+        OpenEquipmentWindow(
+            selectedTop,
+            topItems,
+            item => EquipTop((Item)item),
+            UnequipTop,
+            itemSlotPrefab,
+            EquipmentWindowMode.SlotEquip
+        );
     }
 
     public void OpenBottomWindow()
@@ -499,7 +533,14 @@ public class InventoryManager : MonoBehaviour
         var bottoms = inventory.GetItemsByType(ItemType.bottom);
         Debug.Log($"하의 개수: {bottoms.Count}");
         List<Item> bottomItems = inventory.GetItemsByType(ItemType.bottom);
-        OpenEquipmentWindow(selectedBottom, bottomItems, item => EquipBottom((Item)item), UnequipBottom);
+        OpenEquipmentWindow(
+            selectedBottom,
+            bottomItems,
+            item => EquipBottom((Item)item),
+            UnequipBottom,
+            itemSlotPrefab,
+            EquipmentWindowMode.SlotEquip
+        );
     }
 
     public void EquipSkill(Skill skill)
@@ -770,7 +811,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using UnityEditor.Search;
+
+public enum EquipmentWindowMode
+{
+    SlotEquip,      // 슬롯에서 장착/해제
+    InventoryView   // 인벤토리에서 사용/버리기
+}
 
 public class EquipmentWindow : MonoBehaviour
 {
@@ -784,28 +830,31 @@ public class EquipmentWindow : MonoBehaviour
     public Button unequipButton; //해제 버튼
 
     private object selectedItem; //현재 선택된 아이템/스킬
+    private EquipmentWindowMode currentMode;
 
     public void Initialize<T>
-    ( 
+    (
         T currentItem,
         List<T> items,
         System.Action<IItemData> onEquip,
         System.Action onUnequip,
-        GameObject slotPrefab
+        GameObject slotPrefab,
+        EquipmentWindowMode mode = EquipmentWindowMode.SlotEquip
     )
     {
+        currentMode = mode;
         itemSlotPrefab = slotPrefab;
 
-        foreach(Transform child in itemListContent)
+        foreach (Transform child in itemListContent)
         {
             Destroy(child.gameObject);
         }
 
         Debug.Log($"{items.Count}개의 아이템이 존재합니다");
 
-        foreach(T item in items)
+        foreach (T item in items)
         {
-            if(item == null)
+            if (item == null)
             {
                 Debug.LogError("Null아이템 발견, Skip");
                 continue;
@@ -816,13 +865,13 @@ public class EquipmentWindow : MonoBehaviour
             Image itemIcon = itemSlot.GetComponentInChildren<Image>();
 
             var itemData = item as IItemData;
-            if(itemData != null)
+            if (itemData != null)
             {
                 itemIcon.sprite = itemData?.GetIcon();
 
 
                 itemButton.onClick.RemoveAllListeners();
-                itemButton.onClick.AddListener(() => 
+                itemButton.onClick.AddListener(() =>
                 {
                     OnSlotClicked(itemData, onEquip, onUnequip);
                 });
@@ -833,7 +882,7 @@ public class EquipmentWindow : MonoBehaviour
             }
         }
     }
-    
+
     private void OnSlotClicked(IItemData itemData, System.Action<IItemData> onEquip, System.Action onUnequip)
     {
         ShowOptionWindow(itemData, onEquip, onUnequip);
@@ -841,48 +890,83 @@ public class EquipmentWindow : MonoBehaviour
 
     public void ShowOptionWindow(IItemData itemData, System.Action<IItemData> onEquip, System.Action onUnequip)
     {
-        if(itemData == null) 
-        {
-            Debug.LogError("옵션 윈도우가 연결되지 않았습니다");
-            return;
-        }
-
-        OptionWindow.SetActive(true);
         currentItemIcon.sprite = itemData.GetIcon();
         currentItemName.text = itemData.GetName();
         currentItemOption.text = itemData.GetOption();
 
         equipButton.onClick.RemoveAllListeners();
-        equipButton.onClick.AddListener(() =>
-        {
-            Debug.Log($"{itemData.GetName()} 장착");
-            HandleEquip(itemData); //타입에 따라 장착 처리
-            OptionWindow.SetActive(false);
-            DisableItemSkillWindow();
-        });
-
-        // 해제 버튼
         unequipButton.onClick.RemoveAllListeners();
-        unequipButton.onClick.AddListener(() =>
+
+        if (currentMode == EquipmentWindowMode.InventoryView)
         {
-            Debug.Log($"{itemData.GetName()} 해제");
-            onUnequip?.Invoke(); // InventoryManager에서 전달된 해제 메서드 호출
-            OptionWindow.SetActive(false);
-        });
+            equipButton.GetComponentInChildren<TextMeshProUGUI>().text = "사용";
+            unequipButton.GetComponentInChildren<TextMeshProUGUI>().text = "버리기";
+
+            equipButton.onClick.AddListener(() =>
+            {
+                if (itemData is Item item)
+                {
+                    UseConsumable(item);
+                    InventoryManager.Instance.RemoveItemFromAllSlots(item); 
+                }
+                OptionWindow.SetActive(false);
+                DisableItemSkillWindow();
+            });
+
+            unequipButton.onClick.AddListener(() =>
+            {
+                if (itemData is Item item)
+                {
+                    Inventory.Instance.items.Remove(item);
+                    Inventory.Instance.RaiseInventoryUpdatedEnent();
+                    InventoryManager.Instance.RemoveItemFromAllSlots(item); 
+                }
+                OptionWindow.SetActive(false);
+                DisableItemSkillWindow();
+            });
+        }
+        else // SlotEquip 모드
+        {
+            equipButton.GetComponentInChildren<TextMeshProUGUI>().text = "장착";
+            unequipButton.GetComponentInChildren<TextMeshProUGUI>().text = "해제";
+
+            equipButton.onClick.AddListener(() =>
+            {
+                Debug.Log($"{itemData.GetName()} 장착");
+                HandleEquip(itemData);
+                OptionWindow.SetActive(false);
+                DisableItemSkillWindow();
+            });
+
+            unequipButton.onClick.AddListener(() =>
+            {
+                Debug.Log($"{itemData.GetName()} 해제");
+                onUnequip?.Invoke();
+                OptionWindow.SetActive(false);
+            });
+        }
         
+        OptionWindow.SetActive(true);
+    }
+
+    private void UseConsumable(Item item)
+    {
+        Debug.Log($"{item.itemName}을 사용했습니다!");
+        Inventory.Instance.items.Remove(item); // ✅ 아이템 사용 후 제거
+        Inventory.Instance.RaiseInventoryUpdatedEnent(); // ✅ 인벤토리 갱신
     }
 
     public void DisableItemSkillWindow()
     {
         Transform uiParent = transform.parent;
-        if(uiParent == null)
+        if (uiParent == null)
         {
             Debug.LogError("UI 부모 오브젝트를 찾을 수 없습니다");
             return;
         }
 
         Transform itemSkillWindow = uiParent.Find("Item_Skill Window(Clone)");
-        if(itemSkillWindow != null)
+        if (itemSkillWindow != null)
         {
             itemSkillWindow.gameObject.SetActive(false);
             Destroy(itemSkillWindow.gameObject);
@@ -891,9 +975,9 @@ public class EquipmentWindow : MonoBehaviour
 
     private void HandleEquip(IItemData itemData)
     {
-        if(itemData is Item item)
+        if (itemData is Item item)
         {
-            switch(item.itemType)
+            switch (item.itemType)
             {
                 case ItemType.weapon:
                     InventoryManager.Instance.EquipWeapon(item);
@@ -907,12 +991,18 @@ public class EquipmentWindow : MonoBehaviour
                     InventoryManager.Instance.EquipBottom(item);
                     break;
 
+                case ItemType.Consumable:
+                case ItemType.key:
+                    // 🔹 장착 모드일 때만 슬롯에 배치
+                    InventoryManager.Instance.EquipItemToSlot(item);
+                    break;
+
                 default:
                     Debug.LogError($"지원하지 않는 아이템 타입: {item.itemType}");
                     break;
             }
         }
-        else if(itemData is Skill skill)
+        else if (itemData is Skill skill)
         {
             InventoryManager.Instance.EquipSkill(skill);
         }
