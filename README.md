@@ -54,14 +54,6 @@
 | 붉은 부싯가루 | **출혈** 속성 부여 |
 | 슬럼 캔디 | HP 회복 + 미세한 **독성** 부작용
 
-- https://assetstore.unity.com/packages/vfx/particles/particle-pack-127325?srsltid=AfmBOoqxGBf_4vt-51eU1MJegzM7KCqdwXpLvhdM3u7hibVOupkbvGF1&utm_source=chatgpt.com
-- https://assetstore.unity.com/top-assets/top-free?srsltid=AfmBOoq6mfkimKmsIj0-Hsce_0O4rmym63Yiwtb9gVdrbqy9IL06QEtO&utm_source=chatgpt.com
-- https://itch.io/game-assets/tag-particles/tag-unity?utm_source=chatgpt.com
-- https://assetstore.unity.com/packages/vfx/particles/skills-particle-vfx-pack-lightning-76111?srsltid=AfmBOoqQCKBAw9dkFsowDkrtjvntjyqGAzJ4RyZVycIUUTERnpeq9Hiw&utm_source=chatgpt.com
-- https://assetstore.unity.com/packages/vfx/particles/fire-explosions/free-fire-vfx-urp-266226
-- https://assetstore.unity.com/packages/3d/environments/lowpoly-environment-nature-free-medieval-fantasy-series-187052
-- https://assetstore.unity.com/packages/3d/environments/unity-terrain-urp-demo-scene-213197
-
 ### 🎁 보상 시스템
 
 - 전투 종료 후 보상 창
