@@ -23,7 +23,8 @@
 
 ## 🧩 현재 작업 중 시스템 및 기능 정리
 
-- 
+- https://assetstore.unity.com/top-assets/top-free?srsltid=AfmBOoq6mfkimKmsIj0-Hsce_0O4rmym63Yiwtb9gVdrbqy9IL06QEtO&utm_source=chatgpt.com
+- https://itch.io/game-assets/tag-particles/tag-unity?utm_source=chatgpt.com
 
 ### ⚔️ 전투 시스템
 
