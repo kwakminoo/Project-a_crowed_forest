@@ -5,11 +5,16 @@
 
 ---
 
-## 📝 Twine (군대에서 스토리 정리 도구)
-
-- Twine을 통해 스토리 분기 구조를 시각화 및 정리
-- 작성 내용은 Yarn 코드로 변환하거나 참고용으로 활용 가능
-- 설치: [https://twinery.org/](https://twinery.org/)
+## Yarn Spinner 커맨드 전체 정리
+- show_image - 배경 이미지 표시
+- start_Battle - 전투 시작
+- play_sfx - 효과음 재생
+- play_bgm - BGM 재생
+- change_bgm - BGM 변경
+- stop_bgm - BGM 정지
+- give_item - 아이템 지급
+- ifhas - 아이템 보유 확인 (함수)
+- <<play_cutscene "파일명.mp4">> - 컷신
 
 ## 📚 Useful Links
 
