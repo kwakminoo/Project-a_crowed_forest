@@ -1,6 +1,3 @@
-Custom Line View
--
-~~~C#
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -10,6 +7,7 @@ using System;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine.Video;
 
 public class CustomLineView : DialogueViewBase
 {
@@ -35,18 +33,25 @@ public class CustomLineView : DialogueViewBase
     public string defaultBGM = "main_theme";  // ✅ 기본 BGM 이름 (게임이 시작될 때 실행될 BGM)
     private string previousBGM;  // ✅ 전투 전 BGM 저장
 
+    [Header("Cutscene Settings")]
+    public VideoPlayer videoPlayer;  // ✅ 컷신 재생용 VideoPlayer
+    public GameObject cutsceneCanvas;  // ✅ 컷신 재생 시 표시할 Canvas (선택사항)
+    public GameObject dialogueCanvas;  // ✅ 대화 UI Canvas (컷신 중 숨길 UI)
+    private bool isCutscenePlaying = false;  // ✅ 컷신 재생 중 여부
+
     void Start()
     {
-        var dialogueRunner = FindObjectOfType<DialogueRunner>();
+        var dialogueRunner = FindFirstObjectByType<DialogueRunner>();
         if(dialogueRunner != null)
         {
             dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
-            dialogueRunner.AddCommandHandler<string, string, string, string, string, stirng>("start_Battle", StartBattleCommand);
+            dialogueRunner.AddCommandHandler<string, string, string, string>("start_Battle", StartBattleCommand);
             dialogueRunner.AddCommandHandler<string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
             dialogueRunner.AddCommandHandler<string>("change_bgm", ChangeBGM);  // ✅ BGM 변경 명령 추가
             dialogueRunner.AddCommandHandler<string>("play_bgm", PlayBGM);  // ✅ BGM 실행 명령 추가
             dialogueRunner.AddCommandHandler("stop_bgm", StopBGM);
             dialogueRunner.AddCommandHandler<string, string>("give_item", GiveItemCommand);
+            dialogueRunner.AddCommandHandler<string>("play_cutscene", PlayCutscene);  // ✅ 컷신 재생 명령 추가
             dialogueRunner.AddFunction<string, bool>("ifhas", HasItemInInventory);
         }
         else
@@ -295,7 +300,7 @@ public class CustomLineView : DialogueViewBase
         imageObject.transform.SetAsFirstSibling();
     }
 
-    public void StartBattleCommand(string enemyDataName, string backGroundName, string battleBGM, string nextYarnNode, string firstTurn, string rewardList = "")
+    public void StartBattleCommand(string enemyDataName, string backGroundName, string battleBGM, string nextYarnNode)
     {
         EnemyData enemyData = Resources.Load<EnemyData>($"Character/{enemyDataName}");
         Debug.Log($"로드 시도: Resources/Character/{enemyDataName}");
@@ -309,38 +314,7 @@ public class CustomLineView : DialogueViewBase
             return;
         }
 
-        List<Item> battleItemRewards = new();
-        List<Skill> battleSkillRewards = new();
-        
-        if (!string.IsNullOrEmpty(rewardList) && rewardList.ToLower() != "none")
-        {
-            string[] rewardNames = rewardList.Split(',');
-            foreach (string rewardName in rewardNames)
-            {
-                string trimmedName = rewardName.Trim();
-        
-                // 먼저 아이템으로 시도
-                Item itemReward = Resources.Load<Item>($"Items/{trimmedName}");
-                if (itemReward != null)
-                {
-                    battleItemRewards.Add(itemReward);
-                    continue;
-                }
-        
-                // 아이템이 아니라면 스킬로 시도
-                Skill skillReward = Resources.Load<Skill>($"Skills/{trimmedName}");
-                if (skillReward != null)
-                {
-                    battleSkillRewards.Add(skillReward);
-                    continue;
-                }
-        
-                Debug.LogWarning($"보상 '{trimmedName}'을 Item 또는 Skill에서 찾을 수 없습니다.");
-            }
-        }
-
-
-        var BattleManager = FindObjectOfType<BattleManager>();
+        var BattleManager = FindFirstObjectByType<BattleManager>();
         if(BattleManager != null)
         {
             previousBGM = bgmSource.clip?.name;  // ✅ 기존 BGM 저장
@@ -353,11 +327,8 @@ public class CustomLineView : DialogueViewBase
             {
                 PlayBGM("battle_theme");  // ✅ 기본 전투 BGM 사용
             }
-            //첫 번째 턴 정하기
-            bool playerStarts = firstTurn.ToLower() == "player";
-
             //적 데이터 전달
-            BattleManager.StartBattle(enemyData, backGroundName, nextYarnNode, playerStarts, battleRewards);
+            BattleManager.StartBattle(enemyData, backGroundName, nextYarnNode);
         }
         else
         {
@@ -524,6 +495,123 @@ public class CustomLineView : DialogueViewBase
         return Inventory.Instance.items.Any(item => item.itemName == itemName);
     }
 
-}
+    // 🎬 컷신 재생 커맨드
+    public void PlayCutscene(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName))
+        {
+            Debug.LogError("❌ 컷신 파일명이 비어 있습니다.");
+            return;
+        }
 
-~~~
+        // VideoPlayer가 없으면 생성
+        if (videoPlayer == null)
+        {
+            GameObject videoPlayerObject = new GameObject("CutsceneVideoPlayer");
+            videoPlayer = videoPlayerObject.AddComponent<VideoPlayer>();
+            videoPlayer.playOnAwake = false;
+            videoPlayer.isLooping = false;
+            
+            // AudioSource 추가 (비디오 오디오 재생용)
+            AudioSource videoAudio = videoPlayerObject.AddComponent<AudioSource>();
+            videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;
+            videoPlayer.SetTargetAudioSource(0, videoAudio);
+        }
+
+        // StreamingAssets에서 영상 경로 구성
+        string videoPath = System.IO.Path.Combine(
+            Application.streamingAssetsPath,
+            "Cutscenes",
+            fileName
+        );
+
+        // 플랫폼별 경로 처리
+        #if UNITY_ANDROID && !UNITY_EDITOR
+            videoPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Cutscenes", fileName);
+        #elif UNITY_IOS && !UNITY_EDITOR
+            videoPath = System.IO.Path.Combine(Application.streamingAssetsPath, "Cutscenes", fileName);
+        #else
+            // Windows, Mac, Editor에서는 file:// 프로토콜 사용
+            if (!videoPath.StartsWith("http://") && !videoPath.StartsWith("https://"))
+            {
+                videoPath = "file://" + videoPath;
+            }
+        #endif
+
+        Debug.Log($"🎬 컷신 재생 시작: {fileName} (경로: {videoPath})");
+
+        // VideoPlayer 설정
+        videoPlayer.url = videoPath;
+        videoPlayer.Prepare();
+
+        // 컷신 재생 시작
+        StartCoroutine(PlayCutsceneCoroutine());
+    }
+
+    private IEnumerator PlayCutsceneCoroutine()
+    {
+        isCutscenePlaying = true;
+
+        // 대화 UI 숨기기
+        if (dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(false);
+        }
+
+        // 컷신 Canvas 표시 (있는 경우)
+        if (cutsceneCanvas != null)
+        {
+            cutsceneCanvas.SetActive(true);
+        }
+
+        // VideoPlayer 준비 대기
+        while (!videoPlayer.isPrepared)
+        {
+            yield return null;
+        }
+
+        // 컷신 재생 시작
+        videoPlayer.Play();
+        Debug.Log("🎬 컷신 재생 중...");
+
+        // 컷신이 끝날 때까지 대기
+        while (videoPlayer.isPlaying)
+        {
+            // 스킵 기능 (스페이스바 또는 마우스 클릭)
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+            {
+                Debug.Log("⏩ 컷신 스킵");
+                videoPlayer.Stop();
+                break;
+            }
+            yield return null;
+        }
+
+        // 컷신 종료 처리
+        Debug.Log("🎬 컷신 재생 완료");
+
+        // 컷신 Canvas 숨기기
+        if (cutsceneCanvas != null)
+        {
+            cutsceneCanvas.SetActive(false);
+        }
+
+        // 대화 UI 복원
+        if (dialogueCanvas != null)
+        {
+            dialogueCanvas.SetActive(true);
+        }
+
+        isCutscenePlaying = false;
+
+        // VideoPlayer 정리
+        if (videoPlayer != null)
+        {
+            videoPlayer.Stop();
+            videoPlayer.clip = null;
+        }
+
+        // 다음 노드로 자동 진행 (Yarn이 자동으로 처리)
+    }
+
+}
