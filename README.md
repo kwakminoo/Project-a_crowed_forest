@@ -3,33 +3,11 @@
 > 기억하자. **코딩은 AI가 더 잘하지만**, **생각은 내가 더 잘한다**  
 > 📌 _내가 옳다_
 
----
+## 📜 예정 기능
 
-## Yarn Spinner 커맨드 전체 정리
-- show_image - 배경 이미지 표시
-- start_Battle - 전투 시작
-- play_sfx - 효과음 재생
-- play_bgm - BGM 재생
-- change_bgm - BGM 변경
-- stop_bgm - BGM 정지
-- give_item - 아이템 지급
-- ifhas - 아이템 보유 확인 (함수)
-- <<play_cutscene "파일명.mp4">> - 컷신
-
-## 📚 Useful Links
-
-- [ChatGPT](https://chatgpt.com/gpts) — AI 도움 받기
-- [Pixel Dot Editor](https://giventofly.github.io/pixelit/#tryit) — 도트 변환기
-- [Remove Background](https://www.adobe.com/kr/express/feature/image/remove-background) — 배경 제거
-- [Yarn Spinner Try](https://try.yarnspinner.dev/) — 대화 스크립트 작성
-- [Markdown Guide](https://inpa.tistory.com/entry/MarkDown-%F0%9F%93%9A-%EB%A7%88%ED%81%AC%EB%8B%A4%EC%9A%B4-%EB%AC%B8%EB%B2%95-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC)
-
----
-
-## 🧩 현재 작업 중 시스템 및 기능 정리
-
-- https://assetstore.unity.com/top-assets/top-free?srsltid=AfmBOoq6mfkimKmsIj0-Hsce_0O4rmym63Yiwtb9gVdrbqy9IL06QEtO&utm_source=chatgpt.com
-- https://itch.io/game-assets/tag-particles/tag-unity?utm_source=chatgpt.com
+- 전투 내 아이템 사용 구현
+- 무기마다 스킬 자동 정렬 & 해금 기준 표시
+- 특성 획득 연출 & 효과 미리보기
 
 ### ⚔️ 전투 시스템
 
@@ -73,28 +51,30 @@
 - 조건부 이동, 탐색 제한 설정 가능 (예: 열쇠 필요, 시간 경과 등)
 - 빛 표현
 
+## Yarn Spinner 커맨드 전체 정리
+- show_image - 배경 이미지 표시
+- start_Battle - 전투 시작
+- play_sfx - 효과음 재생
+- play_bgm - BGM 재생
+- change_bgm - BGM 변경
+- stop_bgm - BGM 정지
+- give_item - 아이템 지급
+- ifhas - 아이템 보유 확인 (함수)
+- <<play_cutscene "파일명.mp4">> - 컷신
 
----
+## 📚 Useful Links
 
-## 🧵 Yarn Spinner 커맨드 확장
+- [ChatGPT](https://chatgpt.com/gpts) — AI 도움 받기
+- [Pixel Dot Editor](https://giventofly.github.io/pixelit/#tryit) — 도트 변환기
+- [Remove Background](https://www.adobe.com/kr/express/feature/image/remove-background) — 배경 제거
+- [Yarn Spinner Try](https://try.yarnspinner.dev/) — 대화 스크립트 작성
+- [Markdown Guide](https://inpa.tistory.com/entry/MarkDown-%F0%9F%93%9A-%EB%A7%88%ED%81%AC%EB%8B%A4%EC%9A%B4-%EB%AC%B8%EB%B2%95-%F0%9F%92%AF-%EC%A0%95%EB%A6%AC)
 
-- 전투 시작 커맨드에 보상 아이템/스킬 지정 가능
-- 숙련도 조건 충족 시 해금된 스킬도 보상 UI에 병합
-- `StartBattleCommand(...)`에 다음 인자 포함:
-  - enemyDataName
-  - backGroundName
-  - battleBGM
-  - nextYarnNode
-  - firstTurn
-  - rewardList (아이템/스킬 이름)
 
-## 📜 예정 기능
+## 무료 에셋
 
-- 전투 내 아이템 사용 구현
-- 무기마다 스킬 자동 정렬 & 해금 기준 표시
-- 특성 획득 연출 & 효과 미리보기
-
----
+- https://assetstore.unity.com/top-assets/top-free?srsltid=AfmBOoq6mfkimKmsIj0-Hsce_0O4rmym63Yiwtb9gVdrbqy9IL06QEtO&utm_source=chatgpt.com
+- https://itch.io/game-assets/tag-particles/tag-unity?utm_source=chatgpt.com
 
 ## 🧠 스토리 설계 & 내러티브
 
@@ -143,128 +123,6 @@
 
 ---
 
-## 🎬 컷신 시스템 구현 예정 기능
-
-### ✅ 컷신 재생 시스템
-- Unity `VideoPlayer` 컴포넌트를 이용해 동영상 기반 컷신 재생
-- `.mp4` 파일은 `StreamingAssets` 폴더에서 로드
-
-### ✅ Yarn Spinner 연동
-- Yarn 커맨드: `<<play_cutscene "파일명.mp4">>`
-- 컷신 종료 시 자동으로 다음 노드 실행
-
-### ✅ 컷신 중 제어 차단
-- 컷신 재생 중:
-  - 플레이어 입력 비활성화
-  - HUD 및 상호작용 UI 숨김
-
-### ✅ 컷신 종료 처리
-- 영상 종료 후:
-  - UI 복원
-  - Yarn 스토리 진행 재개
-- 필요 시 스킵 기능 구현 가능 (예: 버튼 입력 시 컷신 중단)
-
-
-## 📁 예상 구현 파일
-
-- `MainTitleUI.cs`
-- `SaveSystem.cs`
-- `SaveSlotUI.cs`
-- `GameOverManager.cs`
-- `DialogueCheckpointManager.cs` (Yarn 연동용)
-
-
-
----
-
-## 🧱 구조 및 Hierarchy (Unity)
-
-```Hierarchy
-
-Main Camara
-    Dialogue
-├── Canvas
-│   ├── CustomLineView(Custem Line View 스크립트)
-│   │   ├── Scrollbar
-│   │   │   ├── Viewport
-│   │   │   │   ├── Content
-│   │   │   │   │   ├── StoryText(Prefab)
-│   │   │   │   │   └── Button(Prefab)
-│   │   │   │   │       └── Text
-│   │   │   └── SlidingArea
-│   │   │       └── Handle
-│   │   ├── BattleView(Battle Manager 스크립트)
-│   │   │   ├── BattleWindow
-│   │   │   │   ├── Background
-│   │   │   │   ├── EnemyObject(Enemy Scrpit 스크립트)
-│   │   │   │   │   ├── Enemy (Image)
-│   │   │   │   │   ├── EnemyHP
-│   │   │   │   │   │   ├── EnemyHPBar
-│   │   │   │   │   │   └── EnemyHPText
-│   │   │   │   │   ├── EnemyName (Image)
-│   │   │   │   │   │   └── Text
-│   │   │   │   ├── PlayerObject
-│   │   │   │   │   ├── Raven (Image)
-│   │   │   │   │   ├── PlayerHP
-│   │   │   │   │   │   ├── HPBar
-│   │   │   │   │   │   └── HPText
-│   │   │   │   │   ├── PlayerSanity
-│   │   │   │   │   │   ├── SanityBar
-│   │   │   │   │   │   └── SanityText
-│   │   │   │   │   └── SkillButtons
-│   │   │   │   │       ├── SkillButton1Add commentMore actions
-│   │   │   │   │       │   └── Image
-│   │   │   │   │       ├── SkillButton2
-│   │   │   │   │       │   └── Image
-│   │   │   │   │       ├── SkillButton3
-│   │   │   │   │       │   └── Image
-│   │   │   │   │       └── SkillButton4
-│   │   │   │   │           └── Image
-│   │   ├── UIView
-│   │   │   ├── HPBar
-│   │   │   ├── HPFrameBar
-│   │   │   ├── SanityBar
-│   │   │   ├── SanityFrameBar
-│   │   │   ├── StoryTopBar
-│   │   │   ├── StoryBar
-│   │   │   ├── Background
-│   │   │   ├── InventoryView(Inventory, Inventory Manager, Player 스크립트)
-│   │   │   │   ├── InventoryWindow
-│   │   │   │   │   ├── RavenDrake (PlayerCharacter Image)
-│   │   │   │   │   ├── XButton
-│   │   │   │   │   ├── SkillSlot
-│   │   │   │   │   │   ├── SkillButton1
-│   │   │   │   │   │   │   └── Image
-│   │   │   │   │   │   ├── SkillButton2
-│   │   │   │   │   │   │   └── Image
-│   │   │   │   │   │   ├── SkillButton3
-│   │   │   │   │   │   │   └── Image
-│   │   │   │   │   │   └── SkillButton4
-│   │   │   │   │   │       └── Image
-│   │   │   │   │   ├── WeaponSlot
-│   │   │   │   │   │   └── Image
-│   │   │   │   │   ├── TopSlot
-│   │   │   │   │   │   └── Image
-│   │   │   │   │   ├── BottomSlot
-│   │   │   │   │   │   └── Image
-│   │   │   │   │   ├── WeaponItemWindow
-│   │   │   │   │   │   ├── XButton
-│   │   │   │   │   │   ├── ScrollView
-│   │   │   │   │   │   │   ├── Content
-│   │   │   │   │   │   │   │   └── WeaponSlotPrefab
-│   │   │   │   │   │   │   └── ScrollbarVertical
-│   │   │   │   │   │   └── EquipmentWindowPrefab (GameObject)
-│   │   │   │   │   │   │   ├── ScrollView (GameObject)
-│   │   │   │   │   │   │   │   ├── Viewport (Mask Component)
-│   │   │   │   │   │   │   │   │   └── Content (GameObject) ← 아이템/스킬 슬롯 프리팹이 동적으로 생성됨
-│   │   │   │   │   │   │   │   │   │   └── Slot(Prefabs)
-│   │   │   │   │   │   │   ├── OptionWindow (GameObject)
-│   │   │   │   │   │   │   │   ├── XButton (Button) ← 창 닫기 버튼
-│   │   │   │   │   │   │   │   ├── Icon (Image) ← 선택한 아이템/스킬의 아이콘
-│   │   │   │   │   │   │   │   ├── Name (TextMeshProUGUI) ← 선택한 아이템/스킬의 이름
-│   │   │   │   │   │   │   │   ├── Description (TextMeshProUGUI) ← 선택한 아이템/스킬의 설명
-│   │   │   │   │   │   │   │   ├── EquipButton (Button) ← 장착 버튼
-│   │   │   │   │   │   │   │   └── UnequipButton (Button) ← 해제 버튼
 
 피드백
 -
