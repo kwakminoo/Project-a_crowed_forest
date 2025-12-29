@@ -32,11 +32,28 @@ public class CustomLineView : DialogueViewBase
     public string defaultBGM = "main_theme";  // ✅ 기본 BGM 이름 (게임이 시작될 때 실행될 BGM)
     private string previousBGM;  // ✅ 전투 전 BGM 저장
 
+    void Awake()
+    {
+        // Awake에서 먼저 DialogueRunner를 찾아서 자동 시작을 막음
+        var dialogueRunner = FindFirstObjectByType<DialogueRunner>();
+        if (dialogueRunner != null)
+        {
+            // 이미 실행 중이면 중단
+            if (dialogueRunner.IsDialogueRunning)
+            {
+                dialogueRunner.Stop();
+                Debug.Log("DialogueRunner 자동 시작을 중단했습니다.");
+            }
+        }
+    }
+    
     void Start()
     {
         var dialogueRunner = FindFirstObjectByType<DialogueRunner>();
         if(dialogueRunner != null)
         {
+            this.dialogueRunner = dialogueRunner; // 참조 저장
+            
             dialogueRunner.AddCommandHandler<string>("show_image", ShowImage);
             dialogueRunner.AddCommandHandler<string, string, string, string>("start_Battle", StartBattleCommand);
             dialogueRunner.AddCommandHandler<string>("play_sfx", PlaySFX);  // ✅ 효과음 명령 추가
@@ -45,15 +62,102 @@ public class CustomLineView : DialogueViewBase
             dialogueRunner.AddCommandHandler("stop_bgm", StopBGM);
             dialogueRunner.AddCommandHandler<string, string>("give_item", GiveItemCommand);
             dialogueRunner.AddFunction<string, bool>("ifhas", HasItemInInventory);
+            
+            dialogueRunner.onNodeStart.AddListener(OnNodeStart); // 노드 변경 이벤트 연결
+            
+            // ✅ 캐릭터 선택에 따른 시나리오 시작 (약간의 지연을 두어 DialogueRunner 초기화 완료 대기)
+            StartCoroutine(StartCharacterScenarioDelayed(dialogueRunner));
         }
         else
         {
             Debug.LogError("다이얼로그 러너를 찾을 수 없습니다");
         }
 
-        dialogueRunner.onNodeStart.AddListener(OnNodeStart); // 노드 변경 이벤트 연결
         // ✅ 게임 시작 시 기본 BGM 실행
         PlayBGM(defaultBGM);
+    }
+    
+    /// <summary>
+    /// DialogueRunner 초기화 완료 후 시나리오 시작 (코루틴)
+    /// </summary>
+    private System.Collections.IEnumerator StartCharacterScenarioDelayed(DialogueRunner runner)
+    {
+        // 한 프레임 대기하여 DialogueRunner의 자동 시작이 완료되도록 함
+        yield return null;
+        
+        // 이미 실행 중이면 중단
+        if (runner.IsDialogueRunning)
+        {
+            runner.Stop();
+            Debug.Log("DialogueRunner 자동 시작을 중단했습니다.");
+            yield return null; // 중단 후 한 프레임 더 대기
+        }
+        
+        StartCharacterScenario(runner);
+    }
+    
+    /// <summary>
+    /// 선택된 캐릭터에 따른 시나리오 시작
+    /// </summary>
+    private void StartCharacterScenario(DialogueRunner runner)
+    {
+        // PlayerPrefs에서 선택된 캐릭터의 시나리오 정보 읽기
+        string startNode = PlayerPrefs.GetString("YarnStartNode", "");
+        string characterName = PlayerPrefs.GetString("SelectedCharacterName", "");
+        string yarnScriptName = PlayerPrefs.GetString("YarnScriptName", "");
+        
+        Debug.Log($"[CustomLineView] ===== 캐릭터 시나리오 정보 =====");
+        Debug.Log($"[CustomLineView] 캐릭터 이름: {characterName}");
+        Debug.Log($"[CustomLineView] Yarn 스크립트: {yarnScriptName}");
+        Debug.Log($"[CustomLineView] 시작 노드: {startNode}");
+        
+        // 저장된 시작 노드가 있으면 해당 노드로 시작
+        if (!string.IsNullOrEmpty(startNode))
+        {
+            // 노드가 존재하는지 확인
+            if (runner.Dialogue.NodeExists(startNode))
+            {
+                Debug.Log($"✅ 노드 '{startNode}' 존재 확인됨. 시나리오 시작합니다.");
+                
+                // 이미 실행 중이면 중단
+                if (runner.IsDialogueRunning)
+                {
+                    Debug.Log("⚠️ DialogueRunner가 이미 실행 중입니다. 중단 후 재시작합니다.");
+                    runner.Stop();
+                    StartCoroutine(RestartDialogueAfterStop(runner, startNode));
+                }
+                else
+                {
+                    runner.StartDialogue(startNode);
+                    Debug.Log($"✅ 시나리오 시작 성공: {startNode}");
+                }
+            }
+            else
+            {
+                Debug.LogError($"❌ 노드 '{startNode}'가 Yarn Project에 존재하지 않습니다!");
+                Debug.LogError($"   확인사항:");
+                Debug.LogError($"   1. CharacterData의 Start Node Name이 Yarn 파일의 실제 노드 이름과 일치하는지");
+                Debug.LogError($"   2. Yarn 파일에 해당 노드가 정의되어 있는지");
+                Debug.LogError($"   3. Yarn Project에 해당 스크립트가 포함되어 있는지");
+                Debug.LogError($"   4. Yarn Project가 컴파일되었는지 확인 (Unity에서 Yarn Project 선택 후 Reimport)");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ 선택된 캐릭터의 시작 노드가 없습니다. DialogueRunner의 기본 설정을 사용합니다.");
+            Debug.LogWarning($"   저장된 정보 - 캐릭터: {characterName}, 스크립트: {yarnScriptName}, 노드: {startNode}");
+            Debug.LogWarning($"   CharacterData에 Start Node Name이 설정되어 있는지 확인하세요.");
+        }
+    }
+    
+    /// <summary>
+    /// DialogueRunner 중단 후 재시작 (코루틴)
+    /// </summary>
+    private System.Collections.IEnumerator RestartDialogueAfterStop(DialogueRunner runner, string startNode)
+    {
+        yield return null; // 한 프레임 대기
+        runner.StartDialogue(startNode);
+        Debug.Log($"✅ 시나리오 재시작 성공: {startNode}");
     }
 
     public override void RunLine(LocalizedLine line, System.Action onDialogueLineFinished)
@@ -383,7 +487,39 @@ public class CustomLineView : DialogueViewBase
                     AddNewTextObject(connectedStoryText); // 새 텍스트 객체 생성
                 }
 
-                onOptionSelected(optionIndex); //선택지 처리    
+                // 선택지 처리 (예외 처리 추가)
+                try
+                {
+                    if (optionIndex >= 0 && optionIndex < options.Length)
+                    {
+                        onOptionSelected(optionIndex);
+                    }
+                    else
+                    {
+                        Debug.LogError($"잘못된 선택지 인덱스: {optionIndex} (총 {options.Length}개)");
+                    }
+                }
+                catch (DialogueException e)
+                {
+                    // Yarn 스크립트 관련 오류 (노드 연결 문제 등)
+                    Debug.LogError($"❌ Yarn 대화 오류: {e.Message}");
+                    Debug.LogWarning($"⚠️ 선택지 {optionIndex}번을 선택했지만 다음 노드로 이동할 수 없습니다.");
+                    Debug.LogWarning("💡 해결 방법: Yarn 스크립트에서 해당 선택지의 다음 노드가 올바르게 연결되어 있는지 확인하세요.");
+                    
+                    // 대화 시스템을 안전하게 종료
+                    var dialogueRunner = FindFirstObjectByType<DialogueRunner>();
+                    if (dialogueRunner != null && dialogueRunner.IsDialogueRunning)
+                    {
+                        dialogueRunner.Stop();
+                        Debug.Log("대화 시스템을 안전하게 종료했습니다.");
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    // 기타 예외
+                    Debug.LogError($"❌ 선택지 처리 중 예상치 못한 오류 발생: {e.GetType().Name}\n{e.Message}");
+                    Debug.LogWarning("Yarn 스크립트를 확인하거나 게임을 재시작해보세요.");
+                }
             });
 
             // 버튼을 텍스트 출력 아래로 이동
