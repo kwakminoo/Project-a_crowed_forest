@@ -24,12 +24,15 @@ public class TitleSceneManager : MonoBehaviour
     [Tooltip("LOAD_GAME 창 GameObject (New Game 클릭 시 활성화)")]
     [SerializeField] private GameObject loadGameWindow;
     
-    [Tooltip("LOAD_GAME 창의 LOAD_FILE 버튼들 (최대 3개)")]
-    [SerializeField] private Button[] loadFileButtons = new Button[3];
+    [Tooltip("LOAD_FILE 슬롯 프리팹들 (LoadFileSlot 컴포넌트가 있는 GameObject들)")]
+    [SerializeField] private LoadFileSlot[] loadFileSlots = new LoadFileSlot[3];
     
-    [Header("캐릭터 선택")]
-    [Tooltip("CharacterSelector 컴포넌트 (CH CHOOSE 오브젝트에 연결)")]
-    [SerializeField] private CharacterSelector characterSelector;
+    [Header("CH CHOOSE 프리팹")]
+    [Tooltip("CH CHOOSE 프리팹 (LoadFileSlot에서 사용)")]
+    [SerializeField] private GameObject chChoosePrefab;
+    
+    [Tooltip("CH CHOOSE를 생성할 부모 Transform (보통 Canvas)")]
+    [SerializeField] private Transform chChooseParent;
     
     [Header("디버그")]
     [SerializeField] private bool enableDebugLogs = true;
@@ -38,6 +41,8 @@ public class TitleSceneManager : MonoBehaviour
     {
         InitializeButtons();
         InitializeWindows();
+        InitializeLoadFileSlots();
+        CheckContinueButton();
     }
     
     /// <summary>
@@ -76,17 +81,6 @@ public class TitleSceneManager : MonoBehaviour
             exitButton.onClick.RemoveAllListeners();
             exitButton.onClick.AddListener(OnExitClicked);
         }
-        
-        // LOAD_FILE 버튼들
-        for (int i = 0; i < loadFileButtons.Length; i++)
-        {
-            int slotIndex = i; // 클로저를 위한 로컬 변수
-            if (loadFileButtons[i] != null)
-            {
-                loadFileButtons[i].onClick.RemoveAllListeners();
-                loadFileButtons[i].onClick.AddListener(() => OnLoadFileClicked(slotIndex));
-            }
-        }
     }
     
     /// <summary>
@@ -99,12 +93,119 @@ public class TitleSceneManager : MonoBehaviour
         {
             loadGameWindow.SetActive(false);
         }
-        
-        // 캐릭터 선택 창도 처음에 비활성화
-        if (characterSelector != null)
+    }
+    
+    /// <summary>
+    /// LOAD_FILE 슬롯들 초기화
+    /// </summary>
+    private void InitializeLoadFileSlots()
+    {
+        // 부모가 설정되지 않았으면 Canvas 찾기
+        if (chChooseParent == null)
         {
-            characterSelector.gameObject.SetActive(false);
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas != null)
+            {
+                chChooseParent = canvas.transform;
+            }
         }
+        
+        // 각 슬롯에 필요한 정보 설정
+        for (int i = 0; i < loadFileSlots.Length; i++)
+        {
+            if (loadFileSlots[i] != null)
+            {
+                loadFileSlots[i].SetSlotNumber(i + 1);
+                
+                if (chChoosePrefab != null)
+                {
+                    loadFileSlots[i].SetChChoosePrefab(chChoosePrefab);
+                }
+                
+                if (chChooseParent != null)
+                {
+                    loadFileSlots[i].SetChChooseParent(chChooseParent);
+                }
+                
+                if (loadGameWindow != null)
+                {
+                    loadFileSlots[i].SetLoadGameWindow(loadGameWindow);
+                }
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Continue 버튼 활성화/비활성화 확인
+    /// </summary>
+    private void CheckContinueButton()
+    {
+        if (continueButton == null)
+        {
+            return;
+        }
+        
+        // 저장된 게임 데이터가 있는지 확인
+        bool hasSaveData = HasAnySaveData();
+        
+        // 저장 데이터가 없으면 버튼 GameObject 자체를 비활성화
+        continueButton.gameObject.SetActive(hasSaveData);
+        
+        if (hasSaveData)
+        {
+            LogDebug("저장된 게임 데이터가 있어 Continue 버튼을 활성화했습니다.");
+        }
+        else
+        {
+            LogDebug("저장된 게임 데이터가 없어 Continue 버튼을 비활성화했습니다.");
+        }
+    }
+    
+    /// <summary>
+    /// 저장된 게임 데이터가 있는지 확인
+    /// </summary>
+    private bool HasAnySaveData()
+    {
+        // TODO: 나중에 SaveLoadManager와 연동
+        // 현재는 PlayerPrefs로 간단하게 확인
+        
+        // 슬롯 1, 2, 3 중 하나라도 저장 데이터가 있으면 true
+        for (int i = 1; i <= 3; i++)
+        {
+            if (HasSaveDataInSlot(i))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// 특정 슬롯에 저장 데이터가 있는지 확인
+    /// </summary>
+    private bool HasSaveDataInSlot(int slotNumber)
+    {
+        // PlayerPrefs를 사용한 간단한 확인
+        // 키 형식: "SaveData_Slot{번호}_Exists"
+        string key = $"SaveData_Slot{slotNumber}_Exists";
+        
+        // PlayerPrefs에 키가 있고 값이 1이면 저장 데이터 있음
+        if (PlayerPrefs.HasKey(key))
+        {
+            return PlayerPrefs.GetInt(key, 0) == 1;
+        }
+        
+        // 또는 더 구체적인 저장 데이터 확인
+        // 예: "SaveData_Slot{번호}_CharacterName" 등
+        string characterKey = $"SaveData_Slot{slotNumber}_CharacterName";
+        if (PlayerPrefs.HasKey(characterKey))
+        {
+            string characterName = PlayerPrefs.GetString(characterKey, "");
+            return !string.IsNullOrEmpty(characterName);
+        }
+        
+        return false;
     }
     
     /// <summary>
@@ -122,30 +223,6 @@ public class TitleSceneManager : MonoBehaviour
         else
         {
             Debug.LogError("[TitleSceneManager] loadGameWindow가 설정되지 않았습니다.");
-        }
-    }
-    
-    /// <summary>
-    /// LOAD_FILE 버튼 클릭 처리
-    /// </summary>
-    private void OnLoadFileClicked(int slotIndex)
-    {
-        LogDebug($"LOAD_FILE {slotIndex + 1} 버튼 클릭됨");
-        
-        // LOAD_GAME 창 닫기
-        if (loadGameWindow != null)
-        {
-            loadGameWindow.SetActive(false);
-        }
-        
-        // 캐릭터 선택 창 열기
-        if (characterSelector != null)
-        {
-            characterSelector.OpenCharacterSelect();
-        }
-        else
-        {
-            Debug.LogError("[TitleSceneManager] characterSelector가 설정되지 않았습니다.");
         }
     }
     
@@ -192,4 +269,6 @@ public class TitleSceneManager : MonoBehaviour
         }
     }
 }
+
+
 
