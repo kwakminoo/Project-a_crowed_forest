@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 캐릭터 선택 UI를 관리하는 컴포넌트
@@ -32,11 +33,18 @@ public class CharacterSelector : MonoBehaviour
     [Tooltip("캐릭터 초상화 버튼 (클릭 시 캐릭터 선택 확인)")]
     [SerializeField] private Button characterSelectButton;
     
+    [Header("게임 시작")]
+    [Tooltip("게임 시작 씬 이름")]
+    [SerializeField] private string gameStartSceneName = "Main Scenes";
+    
     [Header("디버그")]
     [SerializeField] private bool enableDebugLogs = true;
     
     // 현재 선택된 캐릭터 인덱스
     private int currentCharacterIndex = 0;
+    
+    // 이 캐릭터 선택 창이 연결된 슬롯 번호
+    private int associatedSlotNumber = 0;
     
     // 현재 선택된 캐릭터 데이터
     public CharacterData CurrentCharacter 
@@ -177,6 +185,8 @@ public class CharacterSelector : MonoBehaviour
             return;
         }
         
+        LogDebug($"캐릭터 표시 업데이트: {CurrentCharacter.characterName} (인덱스: {currentCharacterIndex})");
+        
         // 초상화 업데이트
         if (characterPortraitImage != null)
         {
@@ -184,23 +194,30 @@ public class CharacterSelector : MonoBehaviour
             if (portrait != null)
             {
                 characterPortraitImage.sprite = portrait;
+                LogDebug($"초상화 업데이트 완료: {CurrentCharacter.characterName}");
             }
             else
             {
-                Debug.LogWarning($"[CharacterSelector] {CurrentCharacter.characterName}의 초상화를 로드할 수 없습니다.");
+                Debug.LogWarning($"[CharacterSelector] {CurrentCharacter.characterName}의 초상화를 로드할 수 없습니다. (경로: UI/{CurrentCharacter.portraitSpriteName})");
             }
+        }
+        else
+        {
+            Debug.LogError("[CharacterSelector] characterPortraitImage가 null입니다.");
         }
         
         // 이름 업데이트
         if (characterNameText != null)
         {
             characterNameText.text = CurrentCharacter.characterName;
+            LogDebug($"이름 업데이트: {CurrentCharacter.characterName}");
         }
         
         // 설명 업데이트
         if (characterDescriptionText != null)
         {
             characterDescriptionText.text = CurrentCharacter.description;
+            LogDebug($"설명 업데이트 완료");
         }
     }
     
@@ -235,9 +252,86 @@ public class CharacterSelector : MonoBehaviour
             return;
         }
         
-        LogDebug($"캐릭터 선택 확인: {CurrentCharacter.characterName}");
-        // TODO: 여기에 캐릭터 선택 확인 후 다음 단계로 진행하는 로직 추가
-        // 예: 게임 시작, 씬 전환 등
+        LogDebug($"캐릭터 선택 확인: {CurrentCharacter.characterName} (슬롯: {associatedSlotNumber})");
+        StartNewGame();
+    }
+    
+    /// <summary>
+    /// 새 게임 시작
+    /// </summary>
+    public void StartNewGame()
+    {
+        if (CurrentCharacter == null)
+        {
+            Debug.LogError("[CharacterSelector] 캐릭터가 선택되지 않았습니다.");
+            return;
+        }
+        
+        LogDebug($"새 게임 시작: {CurrentCharacter.characterName} (슬롯: {associatedSlotNumber})");
+        
+        // 선택된 캐릭터의 시나리오 정보를 저장 (메인 씬에서 사용)
+        SaveCharacterScenarioData();
+        
+        // 선택된 캐릭터 데이터를 저장 시스템에 전달 (나중에 SaveLoadManager와 연동)
+        // SaveLoadManager.Instance.CreateNewGame(associatedSlotNumber, CurrentCharacter);
+        
+        // TODO: 씬 전환 (나중에 SceneTransitionManager와 연동)
+        // SceneTransitionManager.Instance.LoadSceneWithFade(gameStartSceneName);
+        
+        // 씬 전환
+        SceneManager.LoadScene(gameStartSceneName);
+    }
+    
+    /// <summary>
+    /// 선택된 캐릭터의 시나리오 정보를 저장 (메인 씬에서 사용)
+    /// </summary>
+    private void SaveCharacterScenarioData()
+    {
+        if (CurrentCharacter == null)
+        {
+            return;
+        }
+        
+        // PlayerPrefs에 캐릭터 정보 저장 (메인 씬에서 읽어서 사용)
+        PlayerPrefs.SetString("SelectedCharacterName", CurrentCharacter.characterName);
+        PlayerPrefs.SetInt("SelectedSlotNumber", associatedSlotNumber);
+        
+        // Yarn 시나리오 정보 저장
+        if (!string.IsNullOrEmpty(CurrentCharacter.yarnScriptName))
+        {
+            PlayerPrefs.SetString("YarnScriptName", CurrentCharacter.yarnScriptName);
+        }
+        
+        if (!string.IsNullOrEmpty(CurrentCharacter.startNodeName))
+        {
+            PlayerPrefs.SetString("YarnStartNode", CurrentCharacter.startNodeName);
+        }
+        
+        PlayerPrefs.Save();
+        
+        // 상세 디버그 로그
+        Debug.Log($"[CharacterSelector] ===== 캐릭터 시나리오 정보 저장 =====");
+        Debug.Log($"[CharacterSelector] 캐릭터 이름: {CurrentCharacter.characterName}");
+        Debug.Log($"[CharacterSelector] 현재 인덱스: {currentCharacterIndex}");
+        Debug.Log($"[CharacterSelector] 슬롯 번호: {associatedSlotNumber}");
+        Debug.Log($"[CharacterSelector] Yarn 스크립트: {CurrentCharacter.yarnScriptName}");
+        Debug.Log($"[CharacterSelector] 시작 노드: {CurrentCharacter.startNodeName}");
+        Debug.Log($"[CharacterSelector] PlayerPrefs 저장 완료");
+        
+        // 저장된 값 확인
+        string savedName = PlayerPrefs.GetString("SelectedCharacterName", "");
+        string savedScript = PlayerPrefs.GetString("YarnScriptName", "");
+        string savedNode = PlayerPrefs.GetString("YarnStartNode", "");
+        Debug.Log($"[CharacterSelector] 저장 확인 - 이름: {savedName}, 스크립트: {savedScript}, 노드: {savedNode}");
+    }
+    
+    /// <summary>
+    /// 슬롯 번호 설정 (LoadFileSlot에서 호출)
+    /// </summary>
+    public void SetSlotNumber(int slotNumber)
+    {
+        associatedSlotNumber = slotNumber;
+        LogDebug($"슬롯 번호 설정: {slotNumber}");
     }
     
     /// <summary>
