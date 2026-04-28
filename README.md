@@ -1,5 +1,12 @@
 # Project: A Crowed Forest
 
+# Raven Drake
+![Uploading ChatGPT Image 2026년 4월 28일 오후 01_06_06.png…]()
+
+
+
+
+
 ## 📜 예정 기능
 
 - 전투 내 아이템 사용 구현
