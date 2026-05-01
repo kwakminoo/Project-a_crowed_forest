@@ -1,5 +1,11 @@
 # Project: A Crowed Forest
 
+#NOW
+
+<img width="337" height="588" alt="image" src="https://github.com/user-attachments/assets/dbcc8f77-220d-427e-9633-ec317fb4ff0b" />
+<img width="331" height="590" alt="image" src="https://github.com/user-attachments/assets/4b5fad93-2595-4f7c-9854-8e7578ee49b6" />
+
+
 # Raven Drake
 ![Uploading ChatGPT Image 2026년 4월 28일 오후 01_06_06.png…]()
 <img width="1402" height="1122" alt="raven_Win2" src="https://github.com/user-attachments/assets/1315da9b-47cd-4eb1-9898-bb90bcf73036" />
