@@ -2,6 +2,8 @@
 
 # Raven Drake
 ![Uploading ChatGPT Image 2026년 4월 28일 오후 01_06_06.png…]()
+<img width="1402" height="1122" alt="raven_Win2" src="https://github.com/user-attachments/assets/1315da9b-47cd-4eb1-9898-bb90bcf73036" />
+<img width="1115" height="1411" alt="raven_Win1" src="https://github.com/user-attachments/assets/578168a3-c4ff-4830-ab71-54f115f831bf" />
 
 
 
