@@ -1,3 +1,7 @@
+<img width="1254" height="1254" alt="a_Crowed_Forest_Slot" src="https://github.com/user-attachments/assets/2809b074-e97a-4935-af7c-893d8a232f9c" />
+<img width="941" height="1672" alt="a_Crowed_Forest_UIBackground" src="https://github.com/user-attachments/assets/5d8ba545-1527-418e-a62b-5d7fcf6c4047" />
+
+
 ![DALL·E ,](https://github.com/user-attachments/assets/b41677c5-2440-4d22-b0d2-18054af7b125)
 ![file](https://github.com/user-attachments/assets/1dae68d7-5823-4452-9b3e-f8e8b454b1de)
 ![file (2)](https://github.com/user-attachments/assets/5dc671aa-3004-468f-9d32-ae6138843d01)
